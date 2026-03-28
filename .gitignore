@@ -1,0 +1,12 @@
+# Local credentials — NEVER commit this
+.env
+
+# Node modules — recreated with npm install
+node_modules/
+
+# macOS junk
+.DS_Store
+
+# Editor folders
+.vscode/
+.idea/

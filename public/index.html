@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Service Dashboard — Free Chapel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cyan:        #38bdf8;
+      --cyan-bg:     rgba(56,189,248,0.08);
+      --cyan-glow:   rgba(56,189,248,0.15);
+      --purple:      #a78bfa;
+      --purple-bg:   rgba(167,139,250,0.08);
+      --purple-glow: rgba(167,139,250,0.18);
+      --amber:       #fbbf24;
+      --amber-bg:    rgba(251,191,36,0.08);
+      --amber-glow:  rgba(251,191,36,0.15);
+      --green:       #4ade80;
+      --green-bg:    rgba(74,222,128,0.08);
+      --bg:          #080b10;
+      --s1:          rgba(255,255,255,0.055);
+      --s2:          rgba(255,255,255,0.03);
+      --border:      rgba(255,255,255,0.07);
+      --text:        #f0f4f8;
+      --muted:       rgba(255,255,255,0.4);
+      --dim:         rgba(255,255,255,0.2);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: grid;
+      grid-template-rows: 11.5% 1fr 20%;
+      gap: clamp(6px, 1vh, 12px);
+      padding: clamp(8px, 1.2vh, 14px);
+    }
+
+    /* ══════════════════════════════════════
+       HEADER
+    ══════════════════════════════════════ */
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 clamp(16px, 2vw, 36px);
+      background: var(--s1);
+      border: 1px solid var(--border);
+      border-radius: clamp(14px, 1.8vw, 24px);
+      backdrop-filter: blur(20px);
+    }
+
+    .header-left {
+      display: flex; align-items: center;
+      gap: clamp(10px,1.2vw,18px);
+    }
+    .church-text { display: flex; flex-direction: column; gap: 3px; }
+
+    .church-icon {
+      width: clamp(42px,4.8vh,60px); height: clamp(42px,4.8vh,60px);
+      background: var(--purple-bg);
+      border: 1px solid rgba(167,139,250,0.3);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(22px,2.8vh,36px); flex-shrink: 0;
+    }
+    .church-name { font-size: clamp(14px,1.8vh,22px); font-weight: 700; letter-spacing: 0.02em; }
+    .church-sub  { font-size: clamp(11px,1.2vh,15px); color: var(--muted); font-weight: 500; }
+
+    .header-controls {
+      display: flex; align-items: center; gap: 7px; margin-top: 5px;
+    }
+    #plan-selector {
+      background: var(--s2); border: 1px solid var(--border);
+      border-radius: 20px; color: var(--muted);
+      padding: 3px 11px; font-size: clamp(10px,1.05vh,13px);
+      font-weight: 600; font-family: inherit; cursor: pointer; outline: none; max-width: 220px;
+    }
+    #plan-selector option { background: #0d1220; color: var(--text); }
+
+    #refresh-btn {
+      background: var(--s2); border: 1px solid var(--border);
+      border-radius: 20px; color: var(--muted);
+      padding: 3px 11px; font-size: clamp(10px,1.05vh,13px);
+      font-weight: 600; font-family: inherit; cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    #refresh-btn:hover { color: var(--cyan); border-color: rgba(56,189,248,0.4); }
+    #refresh-btn.spinning .spin-icon { animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .header-center { text-align: center; }
+    .service-title { font-size: clamp(16px,2.1vh,28px); font-weight: 800; letter-spacing: 0.01em; }
+    .service-date  { font-size: clamp(11px,1.25vh,16px); color: var(--muted); font-weight: 500; margin-top: 4px; }
+
+    .header-right {
+      display: flex; flex-direction: column; align-items: flex-end;
+      justify-content: center; gap: clamp(8px,1vh,14px);
+    }
+    .times-row { display: flex; gap: clamp(8px,1vw,14px); align-items: flex-start; }
+    .time-chip-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .time-chip {
+      font-size: clamp(15px,1.9vh,26px); font-weight: 700;
+      color: var(--green); background: var(--green-bg);
+      border: 1px solid rgba(74,222,128,0.2);
+      padding: clamp(4px,0.5vh,8px) clamp(14px,1.6vw,22px);
+      border-radius: 20px; font-variant-numeric: tabular-nums;
+    }
+    .svc-countdown {
+      font-size: clamp(10px,1.2vh,16px); font-weight: 700;
+      color: var(--green); font-variant-numeric: tabular-nums;
+      letter-spacing: 0.03em;
+    }
+    .svc-countdown.is-live {
+      color: #f87171;
+      animation: pulse-live 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+    .speaker-row { display: flex; align-items: center; gap: 10px; }
+    .speaker-label {
+      font-size: clamp(9px,1vh,13px); font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em; color: var(--amber);
+    }
+    .speaker-name {
+      font-size: clamp(13px,1.6vh,21px); font-weight: 700;
+      color: var(--amber); background: var(--amber-bg);
+      border: 1px solid rgba(251,191,36,0.25);
+      padding: 4px 16px; border-radius: 30px;
+    }
+
+    /* ══════════════════════════════════════
+       SONGS GRID
+    ══════════════════════════════════════ */
+    .songs-section {
+      display: grid;
+      gap: clamp(6px, 1vh, 12px);
+    }
+
+    .song-box {
+      background: var(--s1);
+      border: 1px solid rgba(167,139,250,0.18);
+      border-radius: clamp(14px, 1.8vw, 24px);
+      backdrop-filter: blur(20px);
+      display: flex; flex-direction: column;
+      /* NO padding here — children handle their own padding */
+      position: relative; overflow: hidden;
+      min-height: 0; /* prevent grid blowout */
+    }
+    .song-box::before {
+      content: '';
+      position: absolute; top: -40%; left: 50%;
+      transform: translateX(-50%);
+      width: 70%; height: 70%;
+      background: var(--purple-glow);
+      border-radius: 50%; filter: blur(40px); pointer-events: none;
+    }
+
+    .song-number {
+      position: absolute; top: clamp(10px,1.2vh,16px); left: clamp(12px,1.4vw,20px);
+      font-size: clamp(9px,0.95vh,12px); font-weight: 800;
+      color: var(--purple); text-transform: uppercase; letter-spacing: 0.14em;
+      background: var(--purple-bg); border: 1px solid rgba(167,139,250,0.2);
+      padding: 2px 8px; border-radius: 8px;
+      z-index: 1;
+    }
+    .song-note-icon {
+      position: absolute; top: clamp(10px,1.2vh,16px); right: clamp(12px,1.4vw,20px);
+      font-size: clamp(14px,1.8vh,22px); opacity: 0.12;
+    }
+
+    /* Main content — centered vertically */
+    .song-main {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: clamp(7px, 1.1vh, 16px);
+      padding: clamp(38px,4.8vh,60px) clamp(14px,1.8vw,28px) clamp(14px,1.6vh,22px);
+      min-height: 0;
+    }
+
+    /* Avatar stack */
+    .avatars { display: flex; justify-content: center; }
+    .avatar {
+      width: clamp(60px,7.5vh,100px); height: clamp(60px,7.5vh,100px);
+      border-radius: 50%; border: 3px solid var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; position: relative; overflow: hidden;
+    }
+    .avatar + .avatar { margin-left: clamp(-16px,-1.6vw,-8px); }
+    .avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 50%; position: absolute; inset: 0;
+    }
+    .avatar .initials {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(20px,2.8vh,40px); font-weight: 800; letter-spacing: -0.02em;
+    }
+
+    .leads-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(5px,0.6vw,10px); }
+    .lead-pill {
+      font-size: clamp(13px,1.55vh,21px); font-weight: 800;
+      color: var(--purple); background: var(--purple-bg);
+      border: 1px solid rgba(167,139,250,0.3);
+      padding: clamp(4px,0.5vh,7px) clamp(12px,1.4vw,20px);
+      border-radius: 30px; letter-spacing: 0.01em;
+    }
+
+    .song-name {
+      font-size: clamp(17px,2.2vh,32px); font-weight: 800;
+      text-align: center; line-height: 1.2;
+    }
+
+    /* Description info bubbles */
+    .desc-bubbles {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: clamp(4px,0.5vw,8px);
+    }
+    .desc-bubble {
+      font-size: clamp(9px,1vh,13px); font-weight: 600;
+      color: var(--muted);
+      background: var(--s2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(2px,0.3vh,4px) clamp(8px,0.9vw,12px);
+      white-space: nowrap;
+    }
+
+    /* Director's notes — plain orange text, no box */
+    .notes-ta {
+      width: 92%; min-height: clamp(24px,3vh,44px);
+      background: transparent; border: none;
+      color: rgba(251,146,60,0.92);
+      font-size: clamp(15px,2vh,28px); font-weight: 700;
+      font-family: inherit; line-height: 1.3;
+      padding: 0; resize: none; outline: none;
+      text-align: center;
+    }
+    .notes-ta::placeholder { color: rgba(251,146,60,0.22); font-style: italic; }
+
+    /* ══════════════════════════════════════
+       CAMERA ROW
+    ══════════════════════════════════════ */
+    .cameras-section {
+      display: grid;
+      gap: clamp(5px, 0.7vw, 10px);
+    }
+
+    /* Slot wrapper — owns the floating label; no overflow constraint */
+    .cam-slot {
+      position: relative;
+      display: flex; flex-direction: column;
+      padding-top: clamp(10px, 1.3vh, 16px); /* space for the floating pill */
+    }
+
+    /* Card — overflow:hidden so glow stays contained */
+    .cam-box {
+      flex: 1;
+      background: var(--s1);
+      border: 1px solid rgba(56,189,248,0.22);
+      border-radius: clamp(10px, 1.2vw, 18px);
+      backdrop-filter: blur(16px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: clamp(6px,0.9vh,14px) clamp(4px,0.5vw,10px);
+      gap: clamp(4px,0.6vh,8px);
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .cam-box::before {
+      content: '';
+      position: absolute; top: -60%; left: 50%;
+      transform: translateX(-50%);
+      width: 80%; height: 80%;
+      background: var(--cyan-glow);
+      border-radius: 50%; filter: blur(20px); pointer-events: none;
+    }
+
+    /* State: director */
+    .cam-slot.is-director .cam-box { border-color: rgba(251,191,36,0.32); }
+    .cam-slot.is-director .cam-box::before { background: var(--amber-glow); }
+
+    /* Floating pill — anchored to slot so it rides the top border of cam-box */
+    .cam-label {
+      position: absolute;
+      top: clamp(10px, 1.3vh, 16px); /* = cam-slot padding-top = top of cam-box border */
+      left: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap; z-index: 2;
+      font-size: clamp(7px,0.85vh,12px); font-weight: 800;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: var(--cyan);
+      background: #0d1624;
+      border: 1px solid rgba(56,189,248,0.5);
+      border-radius: 20px;
+      padding: clamp(2px,0.3vh,4px) clamp(8px,0.9vw,14px);
+    }
+    .cam-slot.is-director .cam-label {
+      color: var(--amber);
+      border-color: rgba(251,191,36,0.55);
+    }
+
+    .cam-avatar {
+      width: clamp(42px,5.2vh,70px); height: clamp(42px,5.2vh,70px);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(15px,1.9vh,28px); font-weight: 800;
+      flex-shrink: 0; overflow: hidden; position: relative;
+    }
+    .cam-avatar img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+    .cam-avatar .initials {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Multiple avatars in one slot — aligned same as single avatar */
+    .cam-avatars-stack {
+      display: flex; justify-content: center; align-items: center;
+      flex-shrink: 0;
+    }
+    .cam-avatars-stack .cam-avatar + .cam-avatar { margin-left: clamp(-10px,-1vw,-6px); }
+
+    .cam-name {
+      font-size: clamp(10px,1.2vh,17px); font-weight: 700;
+      line-height: 1.2; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap; width: 100%;
+    }
+    .cam-desc {
+      font-size: clamp(8px,0.9vh,13px); font-weight: 500;
+      color: var(--muted); line-height: 1.2; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap; width: 100%;
+      margin-top: clamp(-4px,-0.4vh,-1px);
+    }
+    .cam-plus {
+      font-size: clamp(7px,0.8vh,11px); font-weight: 800;
+      color: var(--muted); line-height: 1; margin: 0;
+    }
+
+    /* Slot states — applied to .cam-slot */
+    .cam-slot.is-empty   { opacity: 0.35; }
+    .cam-slot.all-declined .cam-box  { opacity: 0.55; border-color: rgba(248,113,113,0.3); }
+    .cam-slot.all-declined .cam-box::before { background: rgba(248,113,113,0.1); }
+    .cam-slot.all-declined .cam-label {
+      color: rgba(248,113,113,0.85);
+      border-color: rgba(248,113,113,0.5);
+    }
+    .cam-name-empty    { color: var(--dim); font-style: italic; font-weight: 500; }
+    .cam-name-declined { color: rgba(248,113,113,0.6); }
+
+    /* ══════════════════════════════════════
+       STATES
+    ══════════════════════════════════════ */
+    .state-wrap {
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px;
+      grid-column: 1 / -1; height: 100%;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid rgba(167,139,250,0.18);
+      border-top-color: var(--purple);
+      border-radius: 50%; animation: spin 0.75s linear infinite;
+    }
+    .state-msg { font-size: 13px; color: var(--muted); }
+    .err-msg { color: rgba(255,100,100,0.7); font-size: 12px; max-width: 440px; text-align: center; white-space: pre-wrap; }
+    .retry-btn {
+      margin-top: 4px; padding: 5px 16px;
+      background: rgba(255,80,80,0.12); border: 1px solid rgba(255,80,80,0.28);
+      border-radius: 20px; color: #ff7070; font-size: 12px; font-family: inherit; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header>
+  <!-- LEFT: service type + location + plan controls -->
+  <div class="header-left">
+    <div class="church-icon">⛪</div>
+    <div class="church-text">
+      <div class="church-name">Free Chapel Gainesville</div>
+      <div class="church-sub">Sunday AM Services</div>
+      <div class="header-controls">
+        <select id="plan-selector" onchange="onPlanChange(this.value)">
+          <option>Loading plans…</option>
+        </select>
+        <button id="refresh-btn" onclick="refresh()">
+          <svg class="spin-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: plan name only -->
+  <div class="header-center">
+    <div class="service-title" id="service-title">Loading…</div>
+    <div class="service-date" id="service-date">—</div>
+  </div>
+
+  <!-- RIGHT: service times + speaker -->
+  <div class="header-right">
+    <div class="times-row" id="times-row"></div>
+    <div class="speaker-row" id="speaker-row" style="display:none">
+      <span class="speaker-label">Speaker</span>
+      <span class="speaker-name" id="speaker-name">—</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════ SONGS ═══════════════ -->
+<div class="songs-section" id="songs-section">
+  <div class="state-wrap">
+    <div class="spinner"></div>
+    <div class="state-msg">Connecting to Planning Center…</div>
+  </div>
+</div>
+
+<!-- ═══════════════ CAMERAS ═══════════════ -->
+<div class="cameras-section" id="cameras-section"></div>
+
+<script>
+// ─── Config ───────────────────────────────────────────────────────────────────
+const CFG = {
+  SERVICE_TYPE_NAME : 'Free Chapel Gainesville Sunday AM Services',
+  VIDEO_TEAM_NAME   : 'video production',   // lowercase substring match
+  BAND_TEAM_NAMES   : ['band', 'vocal'],     // lowercase substring matches
+  DIRECTOR_KEYWORDS : ['director', 'td', 'tech dir', 'broadcast'],
+};
+
+// Consistent avatar gradients keyed by name hash
+const PALETTES = [
+  'linear-gradient(135deg,#0f766e,#14b8a6)',
+  'linear-gradient(135deg,#6d28d9,#a78bfa)',
+  'linear-gradient(135deg,#9f1239,#f43f5e)',
+  'linear-gradient(135deg,#c2410c,#f97316)',
+  'linear-gradient(135deg,#0369a1,#38bdf8)',
+  'linear-gradient(135deg,#3f6212,#84cc16)',
+  'linear-gradient(135deg,#1e1b4b,#818cf8)',
+  'linear-gradient(135deg,#064e3b,#34d399)',
+  'linear-gradient(135deg,#92400e,#fbbf24)',
+  'linear-gradient(135deg,#4c1d95,#c084fc)',
+];
+
+function palette(name) {
+  let h = 0;
+  for (const c of (name || '')) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return PALETTES[h % PALETTES.length];
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const S = { serviceTypeId: null, plans: [], currentPlanId: null, serviceTimes: [], countdownTimer: null };
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    showSongsState('loading', 'Connecting to Planning Center…');
+    const stData = await get('/api/service-types');
+    const st = (stData.data || []).find(x => x.attributes.name === CFG.SERVICE_TYPE_NAME);
+    if (!st) {
+      const names = (stData.data || []).map(x => x.attributes.name).join('\n• ');
+      throw new Error(`Service type not found.\nAvailable:\n• ${names}`);
+    }
+    S.serviceTypeId = st.id;
+    await loadPlans();
+  } catch (e) {
+    console.error(e);
+    showSongsState('error', e.message);
+  }
+}
+
+async function loadPlans() {
+  const data = await get(`/api/plans?serviceTypeId=${S.serviceTypeId}`);
+  S.plans = data.data || [];
+  const sel = document.getElementById('plan-selector');
+  sel.innerHTML = '';
+  if (!S.plans.length) {
+    sel.innerHTML = '<option>No upcoming services</option>';
+    showSongsState('error', 'No upcoming plans found.');
+    return;
+  }
+  S.plans.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = fmtDate(p.attributes.sort_date);
+    sel.appendChild(o);
+  });
+  await selectPlan(S.plans[0].id);
+}
+
+async function selectPlan(planId) {
+  S.currentPlanId = planId;
+  showSongsState('loading', 'Loading service…');
+  document.getElementById('cameras-section').innerHTML = '';
+  try {
+    const d = await get(`/api/plan?serviceTypeId=${S.serviceTypeId}&planId=${planId}`);
+    renderAll(d, planId);
+  } catch (e) {
+    console.error(e);
+    showSongsState('error', e.message);
+  }
+}
+
+// ─── Render All ───────────────────────────────────────────────────────────────
+function renderAll({ items, teamMembers, planTimes, plan }, planId) {
+  // Build lookup maps from included data
+  const teamMap   = buildMap(teamMembers.included || [], 'Team');
+  const personMap = buildMap(teamMembers.included || [], 'Person');
+
+  // Annotate members with resolved team name
+  const allMembers = (teamMembers.data || []).map(m => ({
+    ...m,
+    _teamName: resolveTeamName(m, teamMap),
+  }));
+
+  // Debug: show unique team names in console
+  const uniqueTeams = [...new Set(allMembers.map(m => m._teamName).filter(Boolean))];
+  console.log('[PCO] Teams in plan:', uniqueTeams);
+
+  renderHeader(plan, planTimes);
+  renderSongs(items, allMembers, personMap, planId);
+  renderVideoTeam(allMembers, personMap);
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+function renderHeader(plan, planTimes) {
+  document.getElementById('service-title').textContent =
+    plan.data.attributes.title || 'Weekend Services';
+  document.getElementById('service-date').textContent =
+    fmtDate(plan.data.attributes.sort_date);
+
+  const timesRow = document.getElementById('times-row');
+  timesRow.innerHTML = '';
+  // Only show service times (not rehearsals), max 2, sorted ascending
+  const serviceTimes = (planTimes.data || [])
+    .filter(t => t.attributes.time_type === 'service' && t.attributes.starts_at)
+    .sort((a, b) => new Date(a.attributes.starts_at) - new Date(b.attributes.starts_at))
+    .slice(0, 2);
+
+  // Store timestamps and build chip + countdown wrappers
+  S.serviceTimes = serviceTimes.map(t => new Date(t.attributes.starts_at).getTime());
+
+  serviceTimes.forEach((t, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'time-chip-wrap';
+
+    const chip = document.createElement('span');
+    chip.className = 'time-chip';
+    chip.textContent = fmtTime(t.attributes.starts_at);
+
+    const cd = document.createElement('div');
+    cd.className = 'svc-countdown';
+    cd.id = `svc-cd-${i}`;
+    cd.style.visibility = 'hidden'; // placeholder until first tick
+
+    wrap.appendChild(chip);
+    wrap.appendChild(cd);
+    timesRow.appendChild(wrap);
+  });
+
+  // Restart countdown ticker
+  if (S.countdownTimer) clearInterval(S.countdownTimer);
+  updateCountdowns();
+  S.countdownTimer = setInterval(updateCountdowns, 1000);
+}
+
+// ─── Songs ────────────────────────────────────────────────────────────────────
+function renderSongs(items, allMembers, personMap, planId) {
+  const section = document.getElementById('songs-section');
+
+  const songs = (items.data || [])
+    .filter(i => i.attributes.item_type === 'song')
+    .sort((a, b) => a.attributes.sequence - b.attributes.sequence);
+
+  const songMap = buildMap(items.included || [], 'Song');
+  const arrMap  = buildMap(items.included || [], 'Arrangement');
+
+  // Band / vocal line members for photo lookup + leader matching
+  const bandMembers = allMembers.filter(m =>
+    CFG.BAND_TEAM_NAMES.some(k => m._teamName.toLowerCase().includes(k))
+  );
+
+  if (!songs.length) {
+    section.style.gridTemplateColumns = '1fr';
+    section.innerHTML = '<div class="state-wrap"><div class="state-msg" style="color:var(--dim)">No songs in this plan</div></div>';
+    return;
+  }
+
+  section.style.gridTemplateColumns = `repeat(${Math.min(songs.length, 5)}, 1fr)`;
+  section.innerHTML = '';
+
+  songs.forEach((item, idx) => {
+    const attr   = item.attributes;
+    const songId = item.relationships?.song?.data?.id;
+    const arrId  = item.relationships?.arrangement?.data?.id;
+    const songData = songId ? songMap[songId] : null;
+    const arrData  = arrId  ? arrMap[arrId]   : null;
+
+    const title    = songData?.attributes?.title || attr.title || 'Untitled';
+    const key      = attr.key_name || '';
+    const notesKey = `pco_note_${planId}_${item.id}`;
+    const saved    = localStorage.getItem(notesKey) || '';
+
+    // Description info bubbles (everything except the Lead: line)
+    const bubbles    = parseDescriptionBubbles(attr.description || '');
+    const bubblesHtml = bubbles.map(b => `<span class="desc-bubble">${esc(b)}</span>`).join('');
+
+    // Parse song-specific leaders from description (up to 3)
+    const leaderNames  = parseLeaderNames(attr.description || '').slice(0, 3);
+    const leadResults  = matchLeaders(leaderNames, bandMembers); // parallel: member | null
+
+    // Build avatar + pill HTML — one entry per parsed name (matched or initials)
+    let avatarsHtml, pillsHtml;
+    if (leaderNames.length) {
+      avatarsHtml = leaderNames.map((lName, i) => {
+        const m = leadResults[i];
+        if (m) return memberAvatarHtml(m, personMap, leaderNames.length - i);
+        // No band member match — show initials avatar
+        return `<div class="avatar" style="background:${palette(lName)};z-index:${leaderNames.length - i}"><div class="initials">${esc(lName.charAt(0).toUpperCase())}</div></div>`;
+      }).join('');
+      pillsHtml = leaderNames.map((lName, i) => {
+        const m = leadResults[i];
+        const display = m ? capFirst(m.attributes.name.split(' ')[0]) : capFirst(lName);
+        return `<span class="lead-pill">${esc(display)}</span>`;
+      }).join('');
+    } else {
+      avatarsHtml = `<div class="avatar" style="background:linear-gradient(135deg,#4c1d95,#7c3aed)"><div class="initials">♪</div></div>`;
+      pillsHtml = '';
+    }
+
+    const box = document.createElement('div');
+    box.className = 'song-box';
+    box.innerHTML = `
+      <span class="song-number">Song ${idx + 1}${key ? '  ·  ' + esc(key) : ''}</span>
+      <span class="song-note-icon">♪</span>
+      <div class="song-main">
+        <div class="avatars">${avatarsHtml}</div>
+        ${pillsHtml ? `<div class="leads-badges">${pillsHtml}</div>` : ''}
+        <div class="song-name">${esc(title)}</div>
+        ${bubblesHtml ? `<div class="desc-bubbles">${bubblesHtml}</div>` : ''}
+        <textarea class="notes-ta" placeholder="Add notes…" data-key="${notesKey}" oninput="saveNote(this)">${esc(saved)}</textarea>
+      </div>
+    `;
+    section.appendChild(box);
+  });
+}
+
+// ─── Video Team ───────────────────────────────────────────────────────────────
+// Fixed position slots — always rendered regardless of assignments
+const VIDEO_POSITIONS = [
+  { label: 'DIRECTOR',      re: /main\s*director/i,      isDir: true  },
+  { label: 'BROADCAST DIR', re: /broadcast\s*director/i, isDir: true  },
+  { label: 'CAM 1',         re: /camera\s*0?1\b/i  },
+  { label: 'CAM 2',         re: /camera\s*0?2\b/i  },
+  { label: 'CAM 3',         re: /camera\s*0?3\b/i  },
+  { label: 'CAM 4',         re: /camera\s*0?4\b/i  },
+  { label: 'CAM 5',         re: /camera\s*0?5\b/i  },
+  { label: 'CAM 6',         re: /camera\s*0?6\b/i  },
+  { label: 'CAM 7',         re: /camera\s*0?7\b/i  },
+  { label: 'CAM 8',         re: /camera\s*0?8\b/i  },
+  { label: 'CAM 9',         re: /camera\s*0?9\b/i  },
+  { label: 'CAM 10',        re: /camera\s*10\b/i   },
+  { label: 'CAM 11/12',     re: /camera\s*1[12]\b|ptz/i },
+];
+
+function renderVideoTeam(allMembers, personMap) {
+  const section = document.getElementById('cameras-section');
+
+  // All video production members from the plan (any status)
+  const allVideoRaw = allMembers.filter(m =>
+    m._teamName.toLowerCase().includes(CFG.VIDEO_TEAM_NAME)
+  );
+
+  section.style.gridTemplateColumns = `repeat(${VIDEO_POSITIONS.length}, 1fr)`;
+  section.innerHTML = '';
+
+  VIDEO_POSITIONS.forEach(pos => {
+    // Everyone in this position slot (confirmed or declined)
+    const members   = allVideoRaw.filter(m => pos.re.test(m.attributes.team_position_name || ''));
+    const confirmed = members.filter(m => m.attributes.status !== 'D');
+    const isEmpty      = members.length === 0;
+    const allDeclined  = members.length > 0 && confirmed.length === 0;
+
+    // Slot wrapper — carries state classes; no overflow constraint
+    let slotClass = 'cam-slot';
+    if (pos.isDir)   slotClass += ' is-director';
+    if (isEmpty)     slotClass += ' is-empty';
+    if (allDeclined) slotClass += ' all-declined';
+
+    // Who to display visually (confirmed only; if all declined show them dimmed)
+    const displayList = confirmed.length > 0 ? confirmed : members;
+
+    // Avatar block
+    const DIR_GRAD   = 'linear-gradient(135deg,#92400e,#fbbf24)';
+    const EMPTY_GRAD = 'linear-gradient(135deg,#1a1a2e,#2d3748)';
+
+    let avatarHtml;
+    if (isEmpty) {
+      avatarHtml = `<div class="cam-avatar" style="background:${pos.isDir ? DIR_GRAD : EMPTY_GRAD}"><div class="initials" style="opacity:0.3">—</div></div>`;
+    } else {
+      const avatarItems = displayList.map((m, i) => {
+        const name  = m.attributes.name || 'Unknown';
+        const photo = getPhoto(m, personMap);
+        const grad  = pos.isDir ? DIR_GRAD : palette(name);
+        const zIdx  = displayList.length - i;
+        const inner = photo
+          ? `<img src="/api/photo-proxy?url=${encodeURIComponent(photo)}" alt="${esc(name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="initials" style="display:none">${getInitials(name)}</div>`
+          : `<div class="initials">${getInitials(name)}</div>`;
+        return `<div class="cam-avatar" style="background:${grad};z-index:${zIdx}">${inner}</div>`;
+      }).join('');
+      // Wrap in stack only for multiple people — single avatar is a direct flex child
+      avatarHtml = displayList.length > 1
+        ? `<div class="cam-avatars-stack">${avatarItems}</div>`
+        : avatarItems;
+    }
+
+    // Name block
+    let nameHtml;
+    if (isEmpty) {
+      nameHtml = `<div class="cam-name cam-name-empty">Unassigned</div>`;
+    } else if (allDeclined) {
+      const dNames = members.map(m => (m.attributes.name || '').split(' ')[0]).join(' + ');
+      nameHtml = `<div class="cam-name cam-name-declined">${esc(dNames)}</div><div class="cam-desc cam-name-declined">Declined</div>`;
+    } else if (confirmed.length === 1) {
+      const name  = confirmed[0].attributes.name || '';
+      const first = name.split(' ')[0];
+      const last  = name.split(' ').slice(1).join(' ');
+      nameHtml = `<div class="cam-name" title="${esc(name)}">${esc(first)}</div>${last ? `<div class="cam-desc">${esc(last)}</div>` : ''}`;
+    } else {
+      nameHtml = confirmed.map((m, i) => {
+        const first = (m.attributes.name || '').split(' ')[0];
+        return (i > 0 ? `<div class="cam-plus">+</div>` : '') + `<div class="cam-name">${esc(first)}</div>`;
+      }).join('');
+    }
+
+    // Build: slot > label (floating) + cam-box (card content, overflow:hidden)
+    const slot = document.createElement('div');
+    slot.className = slotClass;
+
+    const label = document.createElement('div');
+    label.className = 'cam-label';
+    label.textContent = pos.label;
+
+    const box = document.createElement('div');
+    box.className = 'cam-box';
+    box.innerHTML = avatarHtml + nameHtml;
+
+    slot.appendChild(label);
+    slot.appendChild(box);
+    section.appendChild(slot);
+  });
+}
+
+// ─── Team Name Resolution ─────────────────────────────────────────────────────
+function resolveTeamName(member, teamMap) {
+  if (member.attributes.team_name) return member.attributes.team_name;
+  const teamId = member.relationships?.team?.data?.id;
+  if (teamId && teamMap[teamId]) return teamMap[teamId].attributes.name || '';
+  return '';
+}
+
+// ─── Song Leader Parsing ──────────────────────────────────────────────────────
+function parseLeaderNames(description) {
+  const text = description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const match = text.match(/\+?\s*lead[s]?\s*[:\-]\s*([^\n+|<]+)/i);
+  if (!match) return [];
+  return match[1].split(/[,&]+/).map(s => s.trim()).filter(Boolean);
+}
+
+// Parse description into info bubbles — strips HTML, splits on '+', removes Lead line
+function parseDescriptionBubbles(description) {
+  const text = description
+    .replace(/<[^>]+>/g, ' ')       // strip HTML tags
+    .replace(/&[a-z#0-9]+;/gi, ' ') // strip HTML entities
+    .replace(/\s+/g, ' ').trim();
+  return text
+    .split(/\+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+    .filter(s => !/^leads?\s*[:\-]/i.test(s)); // drop the Lead: line
+}
+
+// Returns parallel array to leaderNames: matched PlanPerson or null if not found
+function matchLeaders(leaderNames, bandMembers) {
+  return leaderNames.map(lName => {
+    const lLower = lName.toLowerCase();
+    return bandMembers.find(m => {
+      const full  = (m.attributes.name || '').toLowerCase();
+      const first = full.split(' ')[0];
+      const last  = full.split(' ').pop();
+      return first === lLower || last === lLower ||
+             full.includes(lLower) || lLower.includes(first);
+    }) || null;
+  });
+}
+
+// ─── Sort Video Team ──────────────────────────────────────────────────────────
+function sortVideoTeam(members) {
+  return [...members].sort((a, b) => {
+    const ap = (a.attributes.team_position_name || '').toLowerCase();
+    const bp = (b.attributes.team_position_name || '').toLowerCase();
+    const aDir = CFG.DIRECTOR_KEYWORDS.some(k => ap.includes(k));
+    const bDir = CFG.DIRECTOR_KEYWORDS.some(k => bp.includes(k));
+    if (aDir && !bDir) return -1;
+    if (!aDir && bDir) return 1;
+    const aPTZ = /ptz/.test(ap), bPTZ = /ptz/.test(bp);
+    if (!aPTZ && bPTZ) return -1;
+    if (aPTZ && !bPTZ) return 1;
+    const an = camNum(ap), bn = camNum(bp);
+    if (an !== null && bn !== null) return an - bn;
+    return ap.localeCompare(bp);
+  });
+}
+function camNum(s) {
+  const m = s.match(/(?:camera|cam)\s*(\d+)/);
+  return m ? parseInt(m[1]) : null;
+}
+
+// ─── Avatar HTML ──────────────────────────────────────────────────────────────
+function memberAvatarHtml(member, personMap, zIndex) {
+  const name  = member.attributes.name || '?';
+  const photo = getPhoto(member, personMap);
+  const grad  = palette(name);
+  if (photo) {
+    // Show photo; reveal initials only if image fails to load
+    return `<div class="avatar" style="background:${grad};z-index:${zIndex}"><img src="/api/photo-proxy?url=${encodeURIComponent(photo)}" alt="${esc(name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="initials" style="display:none">${getInitials(name)}</div></div>`;
+  }
+  // No photo — show initials only
+  return `<div class="avatar" style="background:${grad};z-index:${zIndex}"><div class="initials">${getInitials(name)}</div></div>`;
+}
+
+
+function getPhoto(member, personMap) {
+  let p = member.attributes.photo_thumbnail || '';
+  if (!p || /generic|placeholder|missing/i.test(p)) {
+    const pid = member.relationships?.person?.data?.id;
+    if (pid && personMap[pid]) p = personMap[pid].attributes.photo_thumbnail_url || '';
+  }
+  return p && !/generic|placeholder|missing/i.test(p) ? p : '';
+}
+
+// ─── Countdown Timer ──────────────────────────────────────────────────────────
+const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000; // treat as LIVE for up to 2h after start
+
+function updateCountdowns() {
+  const now = Date.now();
+
+  // Find the first service time still in the future
+  const nextIdx = S.serviceTimes.findIndex(t => t > now);
+
+  S.serviceTimes.forEach((t, i) => {
+    const el = document.getElementById(`svc-cd-${i}`);
+    if (!el) return;
+    const diff = t - now; // positive = future, negative = past
+
+    if (diff > 0 && i === nextIdx) {
+      // Next upcoming service — show live countdown
+      el.textContent = fmtCountdown(diff);
+      el.className = 'svc-countdown';
+      el.style.visibility = '';
+    } else if (diff <= 0 && diff > -LIVE_WINDOW_MS) {
+      // Service started, within 2h window — show LIVE
+      el.textContent = '● LIVE';
+      el.className = 'svc-countdown is-live';
+      el.style.visibility = '';
+    } else {
+      // Not next, or more than 2h past — hide
+      el.style.visibility = 'hidden';
+    }
+  });
+}
+
+function fmtCountdown(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const h   = Math.floor(totalSec / 3600);
+  const m   = Math.floor((totalSec % 3600) / 60);
+  const sec = totalSec % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+  if (m > 0) return `${m}m ${String(sec).padStart(2, '0')}s`;
+  return `${sec}s`;
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+async function get(url) {
+  const r = await fetch(url);
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({ error: r.statusText }));
+    throw new Error(j.error || `HTTP ${r.status}`);
+  }
+  return r.json();
+}
+
+function buildMap(arr, type) {
+  const m = {};
+  arr.forEach(i => { if (i.type === type) m[i.id] = i; });
+  return m;
+}
+
+function getInitials(name) {
+  return (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(s || ''));
+  return d.innerHTML;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    timeZone: 'America/New_York'
+  });
+}
+
+function fmtTime(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true,
+    timeZone: 'America/New_York'
+  });
+}
+
+function saveNote(ta) { localStorage.setItem(ta.dataset.key, ta.value); }
+
+function onPlanChange(planId) {
+  if (planId && planId !== S.currentPlanId) selectPlan(planId);
+}
+
+async function refresh() {
+  if (!S.serviceTypeId) return init();
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  try {
+    if (S.currentPlanId) await selectPlan(S.currentPlanId);
+    else await loadPlans();
+  } finally {
+    btn.classList.remove('spinning');
+  }
+}
+
+function showSongsState(type, msg) {
+  const s = document.getElementById('songs-section');
+  s.style.gridTemplateColumns = '1fr';
+  if (type === 'loading') {
+    s.innerHTML = `<div class="state-wrap"><div class="spinner"></div><div class="state-msg">${esc(msg)}</div></div>`;
+  } else {
+    s.innerHTML = `
+      <div class="state-wrap">
+        <div style="font-size:26px">⚠️</div>
+        <div class="state-msg">Error loading service</div>
+        <div class="err-msg">${esc(msg)}</div>
+        <button class="retry-btn" onclick="refresh()">Try Again</button>
+      </div>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+╔══════════════════════════════════════════════════════════════╗
+║          PCO SERVICE DASHBOARD — SETUP GUIDE                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  OPTION A — RUN LOCALLY ON MAC  (quickest, works offline)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT YOU NEED FIRST
+───────────────────
+Node.js installed on your Mac.
+→ Download free at: https://nodejs.org
+→ Click the big "LTS" button and install it
+→ No restart needed on Mac
+
+CREDENTIAL FILE (one-time setup)
+─────────────────────────────────
+The app reads your PCO keys from a file called .env
+(This file is NOT uploaded to GitHub — it stays on your machine only)
+
+1. In the pco-dashboard folder, find the file: .env.example
+2. Duplicate it and rename the copy to:  .env
+   (Note the dot at the start — it's a hidden file on Mac)
+3. Open .env in TextEdit or any text editor
+4. It should already contain your real credentials.
+   If not, fill them in:
+      PCO_APP_ID=your_app_id_here
+      PCO_SECRET=your_secret_here
+
+EASIEST WAY TO START (double-click)
+─────────────────────────────────────
+1. Right-click  start-mac.sh  →  Open With  →  Terminal
+   (First time only: macOS may warn it's from an unidentified developer.
+    Go to System Settings → Privacy & Security → click "Allow Anyway")
+2. The server starts and Chrome opens automatically at http://localhost:3000
+3. Press Cmd+Ctrl+F for fullscreen, then share your screen to the TV
+
+MANUAL START (Terminal)
+────────────────────────
+1. Open Terminal
+2. Type:  cd  then drag the pco-dashboard folder into Terminal and press Enter
+3. First run only — install dependencies:
+      npm install
+4. Start the server:
+      node server.js
+5. Open Chrome → http://localhost:3000
+
+STOPPING THE APP
+────────────────
+Press Ctrl+C in the Terminal window.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  OPTION B — RUN ON WINDOWS PC  (original setup)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Install Node.js from https://nodejs.org if not already installed
+2. Open Command Prompt (Windows Key + R → cmd → Enter)
+3. Navigate to the folder:
+      cd "C:\path\to\pco-dashboard"
+   (Right-click folder → "Copy as path", paste after cd )
+4. First run only:
+      npm install
+5. Start:
+      node server.js
+6. Open Chrome → http://localhost:3000, press F11 for fullscreen
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  OPTION C — DEPLOY TO RENDER  (access from any browser, anywhere)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+One-time setup — then you just open a URL from any device.
+
+STEP 1 — Push to GitHub
+  1. Create a free account at https://github.com
+  2. Install Git:  https://git-scm.com  (Mac: may already be installed)
+  3. In Terminal, inside the pco-dashboard folder:
+        git init
+        git add .
+        git commit -m "Initial commit"
+  4. On GitHub, click + → New Repository, name it  pco-dashboard
+     Set to Private (your credentials are in .env but keep it private anyway)
+  5. Follow the "push existing repo" commands GitHub shows you
+
+STEP 2 — Deploy on Render
+  1. Create a free account at https://render.com
+  2. Click  New +  →  Web Service
+  3. Connect your GitHub account and select the pco-dashboard repo
+  4. Configure:
+        Name:        pco-dashboard  (or anything you like)
+        Runtime:     Node
+        Build Command:   npm install
+        Start Command:   node server.js
+  5. Under  Environment Variables, add:
+        PCO_APP_ID   →  (paste your app ID)
+        PCO_SECRET   →  (paste your secret)
+  6. Click  Deploy
+  7. In ~2 minutes you'll have a URL like:
+        https://pco-dashboard.onrender.com
+
+  Open that URL in Chrome on any device, anywhere.
+  Bookmark it — you're done.
+
+NOTE: Render's free tier spins down after 15 minutes of inactivity.
+First load of the day may take 30-60 seconds to wake up. Paid tier
+($7/mo) stays always-on.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TIPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Use the dropdown in the header to switch between upcoming services
+• Director's Notes are saved per-song in the browser (localStorage)
+• The Refresh button pulls the latest data from PCO immediately
+• Countdown timer auto-updates every second — shows LIVE in red
+  when a service is in progress
+• For best TV display: fullscreen Chrome, then screenshare
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"node is not recognized" / "command not found"
+   → Install Node.js from nodejs.org
+
+"Missing .env file" or "Missing PCO credentials"
+   → Copy .env.example to .env and fill in your credentials
+
+"Service type not found"
+   → The service type name in PCO must match exactly:
+     "Free Chapel Gainesville Sunday AM Services"
+
+Photos not loading
+   → Normal on first load — they cache after a few seconds
+
+start-mac.sh won't open
+   → Right-click → Open With → Terminal
+   → If blocked: System Settings → Privacy & Security → Allow Anyway
