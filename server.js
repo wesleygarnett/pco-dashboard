@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // Render sets PORT automatically; fallback to 3000 locally
 
 // ─── Planning Center Credentials ─────────────────────────────────────────────
 // Loaded from environment variables — never hardcode secrets in source code.
