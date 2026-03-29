@@ -227,6 +227,21 @@
     .songs-section {
       display: grid;
       gap: clamp(6px, 1vh, 12px);
+      overflow: hidden;
+    }
+    .songs-section.scrollable {
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .songs-section.scrollable::-webkit-scrollbar {
+      height: 5px;
+    }
+    .songs-section.scrollable::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .songs-section.scrollable::-webkit-scrollbar-thumb {
+      background: var(--purple-border-strong);
+      border-radius: 10px;
     }
 
     .song-box {
@@ -706,7 +721,13 @@ function renderSongs(items, allMembers, personMap, planId) {
     return;
   }
 
-  section.style.gridTemplateColumns = `repeat(${Math.min(songs.length, 5)}, 1fr)`;
+  if (songs.length <= 5) {
+    section.style.gridTemplateColumns = `repeat(${songs.length}, 1fr)`;
+    section.classList.remove('scrollable');
+  } else {
+    section.style.gridTemplateColumns = `repeat(${songs.length}, calc((100% - 4 * clamp(6px, 1vh, 12px)) / 5))`;
+    section.classList.add('scrollable');
+  }
   section.innerHTML = '';
 
   songs.forEach((item, idx) => {
@@ -745,7 +766,7 @@ function renderSongs(items, allMembers, personMap, planId) {
       }).join('');
     } else {
       avatarsHtml = `<div class="avatar" style="background:linear-gradient(135deg,#4c1d95,#7c3aed)"><div class="initials">♪</div></div>`;
-      pillsHtml = '';
+      pillsHtml = `<span class="lead-pill">TBD</span>`;
     }
 
     const box = document.createElement('div');
@@ -1065,6 +1086,7 @@ async function refresh() {
 function showSongsState(type, msg) {
   const s = document.getElementById('songs-section');
   s.style.gridTemplateColumns = '1fr';
+  s.classList.remove('scrollable');
   if (type === 'loading') {
     s.innerHTML = `<div class="state-wrap"><div class="spinner"></div><div class="state-msg">${esc(msg)}</div></div>`;
   } else {
