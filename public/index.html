@@ -112,7 +112,7 @@
       padding: clamp(8px, 1.2vh, 14px);
     }
 
-    body, header, .song-box, .cam-box, #plan-selector, #refresh-btn, .theme-toggle,
+    body, header, .song-box, .cam-box, #plan-selector, #refresh-btn,
     .time-chip, .speaker-name, .lead-pill, .song-number, .desc-bubble, .cam-label {
       transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
@@ -159,7 +159,7 @@
     }
     #plan-selector option { background: var(--plan-option-bg); color: var(--text); }
 
-    #refresh-btn, .theme-toggle {
+    #refresh-btn {
       background: var(--s2); border: 1px solid var(--border);
       border-radius: 20px; color: var(--muted);
       padding: 3px 11px; font-size: clamp(10px,1.05vh,13px);
@@ -167,15 +167,7 @@
       display: flex; align-items: center; gap: 5px;
       transition: color 0.2s, border-color 0.2s;
     }
-    #refresh-btn:hover, .theme-toggle:hover { color: var(--cyan); border-color: var(--cyan-border-strong); }
-    .theme-toggle {
-      min-width: 76px;
-      justify-content: center;
-    }
-    .theme-icon {
-      font-size: 12px;
-      line-height: 1;
-    }
+    #refresh-btn:hover { color: var(--cyan); border-color: var(--cyan-border-strong); }
     #refresh-btn.spinning .spin-icon { animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -262,14 +254,25 @@
       background: var(--purple-glow);
       border-radius: 50%; filter: blur(40px); pointer-events: none;
     }
+    .song-box::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      opacity: 0.035;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+    }
 
     .song-number {
-      position: absolute; top: clamp(10px,1.2vh,16px); left: clamp(12px,1.4vw,20px);
-      font-size: clamp(9px,0.95vh,12px); font-weight: 800;
+      position: absolute; top: clamp(10px,1.2vh,16px);
+      left: 50%; transform: translateX(-50%);
+      font-size: clamp(13px,1.6vh,20px); font-weight: 800;
       color: var(--purple); text-transform: uppercase; letter-spacing: 0.14em;
       background: var(--purple-bg); border: 1px solid var(--purple-border);
-      padding: 2px 8px; border-radius: 8px;
-      z-index: 1;
+      padding: clamp(3px,0.4vh,6px) clamp(14px,1.6vw,22px); border-radius: 20px;
+      white-space: nowrap; z-index: 1;
     }
     .song-note-icon {
       position: absolute; top: clamp(10px,1.2vh,16px); right: clamp(12px,1.4vw,20px);
@@ -496,10 +499,6 @@
           </svg>
           Refresh
         </button>
-        <button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch color mode">
-          <span class="theme-icon" aria-hidden="true">D</span>
-          <span class="theme-text">Dark</span>
-        </button>
       </div>
     </div>
   </div>
@@ -539,8 +538,6 @@ const CFG = {
   BAND_TEAM_NAMES   : ['band', 'vocal'],     // lowercase substring matches
   DIRECTOR_KEYWORDS : ['director', 'td', 'tech dir', 'broadcast'],
 };
-const THEME_KEY = 'pco-theme';
-
 // Consistent avatar gradients keyed by name hash
 const PALETTES = [
   'linear-gradient(135deg,#0f766e,#14b8a6)',
@@ -564,30 +561,9 @@ function palette(name) {
 // ─── State ────────────────────────────────────────────────────────────────────
 const S = { serviceTypeId: null, plans: [], currentPlanId: null, serviceTimes: [], countdownTimer: null };
 
-function applyTheme(theme, persist = true) {
-  const nextTheme = theme === 'light' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = nextTheme;
-  if (persist) {
-    try { localStorage.setItem(THEME_KEY, nextTheme); } catch (_) {}
-  }
-
-  const btn = document.getElementById('theme-toggle');
-  if (!btn) return;
-
-  const isLight = nextTheme === 'light';
-  btn.setAttribute('aria-pressed', String(isLight));
-  btn.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
-  btn.querySelector('.theme-icon').textContent = isLight ? 'L' : 'D';
-  btn.querySelector('.theme-text').textContent = isLight ? 'Light' : 'Dark';
-}
-
-function toggleTheme() {
-  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
-}
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 async function init() {
-  applyTheme(document.documentElement.dataset.theme || 'dark', false);
   try {
     showSongsState('loading', 'Connecting to Planning Center…');
     const stData = await get('/api/service-types');
@@ -756,12 +732,14 @@ function renderSongs(items, allMembers, personMap, planId) {
       avatarsHtml = leaderNames.map((lName, i) => {
         const m = leadResults[i];
         if (m) return memberAvatarHtml(m, personMap, leaderNames.length - i);
-        // No band member match — show initials avatar
-        return `<div class="avatar" style="background:${palette(lName)};z-index:${leaderNames.length - i}"><div class="initials">${esc(lName.charAt(0).toUpperCase())}</div></div>`;
+        // No band member match — show initials avatar (TBD if name is wrapped in parens)
+        const isTbd = lName.startsWith('(');
+        const initials = isTbd ? 'TBD' : esc(lName.charAt(0).toUpperCase());
+        return `<div class="avatar" style="background:${palette(lName)};z-index:${leaderNames.length - i}"><div class="initials" style="${isTbd ? 'font-size:clamp(10px,1.4vh,18px)' : ''}">${initials}</div></div>`;
       }).join('');
       pillsHtml = leaderNames.map((lName, i) => {
         const m = leadResults[i];
-        const display = m ? capFirst(m.attributes.name.split(' ')[0]) : capFirst(lName);
+        const display = m ? capFirst(m.attributes.name.split(' ')[0]) : (lName.startsWith('(') ? 'TBD' : capFirst(lName));
         return `<span class="lead-pill">${esc(display)}</span>`;
       }).join('');
     } else {
