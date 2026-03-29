@@ -6,6 +6,17 @@
   <title>Service Dashboard — Free Chapel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    (() => {
+      try {
+        const savedTheme = localStorage.getItem('pco-theme');
+        const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.dataset.theme = savedTheme || systemTheme;
+      } catch (_) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    })();
+  </script>
   <style>
     :root {
       --cyan:        #38bdf8;
@@ -26,6 +37,61 @@
       --text:        #f0f4f8;
       --muted:       rgba(255,255,255,0.4);
       --dim:         rgba(255,255,255,0.2);
+      --plan-option-bg: #0d1220;
+      --label-bg:    #0d1624;
+      --purple-border: rgba(167,139,250,0.2);
+      --purple-border-strong: rgba(167,139,250,0.3);
+      --purple-border-soft: rgba(167,139,250,0.18);
+      --cyan-border: rgba(56,189,248,0.22);
+      --cyan-border-strong: rgba(56,189,248,0.4);
+      --amber-border: rgba(251,191,36,0.25);
+      --amber-border-strong: rgba(251,191,36,0.55);
+      --green-border: rgba(74,222,128,0.2);
+      --avatar-ring: var(--bg);
+      --live:        #f87171;
+      --danger:      #ff7070;
+      --danger-text: rgba(255,100,100,0.7);
+      --danger-bg:   rgba(255,80,80,0.12);
+      --danger-border: rgba(255,80,80,0.28);
+      --note-text:   rgba(251,146,60,0.92);
+      --note-placeholder: rgba(251,146,60,0.22);
+      color-scheme: dark;
+    }
+
+    :root[data-theme="light"] {
+      --cyan-bg:     rgba(56,189,248,0.12);
+      --cyan-glow:   rgba(56,189,248,0.12);
+      --purple-bg:   rgba(167,139,250,0.12);
+      --purple-glow: rgba(167,139,250,0.16);
+      --amber-bg:    rgba(251,191,36,0.14);
+      --amber-glow:  rgba(251,191,36,0.16);
+      --green-bg:    rgba(74,222,128,0.12);
+      --bg:          #eef3f9;
+      --s1:          rgba(255,255,255,0.88);
+      --s2:          rgba(255,255,255,0.7);
+      --border:      rgba(15,23,42,0.1);
+      --text:        #0f172a;
+      --muted:       rgba(15,23,42,0.62);
+      --dim:         rgba(15,23,42,0.3);
+      --plan-option-bg: #ffffff;
+      --label-bg:    #f5f9ff;
+      --purple-border: rgba(124,58,237,0.2);
+      --purple-border-strong: rgba(124,58,237,0.3);
+      --purple-border-soft: rgba(124,58,237,0.14);
+      --cyan-border: rgba(14,165,233,0.22);
+      --cyan-border-strong: rgba(14,165,233,0.38);
+      --amber-border: rgba(217,119,6,0.22);
+      --amber-border-strong: rgba(217,119,6,0.38);
+      --green-border: rgba(34,197,94,0.2);
+      --avatar-ring: #eef3f9;
+      --live:        #dc2626;
+      --danger:      #dc2626;
+      --danger-text: rgba(220,38,38,0.78);
+      --danger-bg:   rgba(220,38,38,0.08);
+      --danger-border: rgba(220,38,38,0.18);
+      --note-text:   rgba(194,65,12,0.95);
+      --note-placeholder: rgba(194,65,12,0.35);
+      color-scheme: light;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,6 +110,11 @@
       grid-template-rows: 11.5% 1fr 20%;
       gap: clamp(6px, 1vh, 12px);
       padding: clamp(8px, 1.2vh, 14px);
+    }
+
+    body, header, .song-box, .cam-box, #plan-selector, #refresh-btn, .theme-toggle,
+    .time-chip, .speaker-name, .lead-pill, .song-number, .desc-bubble, .cam-label {
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
 
     /* ══════════════════════════════════════
@@ -69,7 +140,7 @@
     .church-icon {
       width: clamp(42px,4.8vh,60px); height: clamp(42px,4.8vh,60px);
       background: var(--purple-bg);
-      border: 1px solid rgba(167,139,250,0.3);
+      border: 1px solid var(--purple-border-strong);
       border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
       font-size: clamp(22px,2.8vh,36px); flex-shrink: 0;
@@ -86,9 +157,9 @@
       padding: 3px 11px; font-size: clamp(10px,1.05vh,13px);
       font-weight: 600; font-family: inherit; cursor: pointer; outline: none; max-width: 220px;
     }
-    #plan-selector option { background: #0d1220; color: var(--text); }
+    #plan-selector option { background: var(--plan-option-bg); color: var(--text); }
 
-    #refresh-btn {
+    #refresh-btn, .theme-toggle {
       background: var(--s2); border: 1px solid var(--border);
       border-radius: 20px; color: var(--muted);
       padding: 3px 11px; font-size: clamp(10px,1.05vh,13px);
@@ -96,7 +167,15 @@
       display: flex; align-items: center; gap: 5px;
       transition: color 0.2s, border-color 0.2s;
     }
-    #refresh-btn:hover { color: var(--cyan); border-color: rgba(56,189,248,0.4); }
+    #refresh-btn:hover, .theme-toggle:hover { color: var(--cyan); border-color: var(--cyan-border-strong); }
+    .theme-toggle {
+      min-width: 76px;
+      justify-content: center;
+    }
+    .theme-icon {
+      font-size: 12px;
+      line-height: 1;
+    }
     #refresh-btn.spinning .spin-icon { animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -113,7 +192,7 @@
     .time-chip {
       font-size: clamp(15px,1.9vh,26px); font-weight: 700;
       color: var(--green); background: var(--green-bg);
-      border: 1px solid rgba(74,222,128,0.2);
+      border: 1px solid var(--green-border);
       padding: clamp(4px,0.5vh,8px) clamp(14px,1.6vw,22px);
       border-radius: 20px; font-variant-numeric: tabular-nums;
     }
@@ -123,7 +202,7 @@
       letter-spacing: 0.03em;
     }
     .svc-countdown.is-live {
-      color: #f87171;
+      color: var(--live);
       animation: pulse-live 1.5s ease-in-out infinite;
     }
     @keyframes pulse-live {
@@ -138,7 +217,7 @@
     .speaker-name {
       font-size: clamp(13px,1.6vh,21px); font-weight: 700;
       color: var(--amber); background: var(--amber-bg);
-      border: 1px solid rgba(251,191,36,0.25);
+      border: 1px solid var(--amber-border);
       padding: 4px 16px; border-radius: 30px;
     }
 
@@ -152,7 +231,7 @@
 
     .song-box {
       background: var(--s1);
-      border: 1px solid rgba(167,139,250,0.18);
+      border: 1px solid var(--purple-border-soft);
       border-radius: clamp(14px, 1.8vw, 24px);
       backdrop-filter: blur(20px);
       display: flex; flex-direction: column;
@@ -173,7 +252,7 @@
       position: absolute; top: clamp(10px,1.2vh,16px); left: clamp(12px,1.4vw,20px);
       font-size: clamp(9px,0.95vh,12px); font-weight: 800;
       color: var(--purple); text-transform: uppercase; letter-spacing: 0.14em;
-      background: var(--purple-bg); border: 1px solid rgba(167,139,250,0.2);
+      background: var(--purple-bg); border: 1px solid var(--purple-border);
       padding: 2px 8px; border-radius: 8px;
       z-index: 1;
     }
@@ -195,7 +274,7 @@
     .avatars { display: flex; justify-content: center; }
     .avatar {
       width: clamp(60px,7.5vh,100px); height: clamp(60px,7.5vh,100px);
-      border-radius: 50%; border: 3px solid var(--bg);
+      border-radius: 50%; border: 3px solid var(--avatar-ring);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; position: relative; overflow: hidden;
     }
@@ -214,7 +293,7 @@
     .lead-pill {
       font-size: clamp(13px,1.55vh,21px); font-weight: 800;
       color: var(--purple); background: var(--purple-bg);
-      border: 1px solid rgba(167,139,250,0.3);
+      border: 1px solid var(--purple-border-strong);
       padding: clamp(4px,0.5vh,7px) clamp(12px,1.4vw,20px);
       border-radius: 30px; letter-spacing: 0.01em;
     }
@@ -243,13 +322,13 @@
     .notes-ta {
       width: 92%; min-height: clamp(24px,3vh,44px);
       background: transparent; border: none;
-      color: rgba(251,146,60,0.92);
+      color: var(--note-text);
       font-size: clamp(15px,2vh,28px); font-weight: 700;
       font-family: inherit; line-height: 1.3;
       padding: 0; resize: none; outline: none;
       text-align: center;
     }
-    .notes-ta::placeholder { color: rgba(251,146,60,0.22); font-style: italic; }
+    .notes-ta::placeholder { color: var(--note-placeholder); font-style: italic; }
 
     /* ══════════════════════════════════════
        CAMERA ROW
@@ -270,7 +349,7 @@
     .cam-box {
       flex: 1;
       background: var(--s1);
-      border: 1px solid rgba(56,189,248,0.22);
+      border: 1px solid var(--cyan-border);
       border-radius: clamp(10px, 1.2vw, 18px);
       backdrop-filter: blur(16px);
       display: flex; flex-direction: column;
@@ -289,7 +368,7 @@
     }
 
     /* State: director */
-    .cam-slot.is-director .cam-box { border-color: rgba(251,191,36,0.32); }
+    .cam-slot.is-director .cam-box { border-color: var(--amber-border-strong); }
     .cam-slot.is-director .cam-box::before { background: var(--amber-glow); }
 
     /* Floating pill — anchored to slot so it rides the top border of cam-box */
@@ -302,14 +381,14 @@
       font-size: clamp(7px,0.85vh,12px); font-weight: 800;
       letter-spacing: 0.13em; text-transform: uppercase;
       color: var(--cyan);
-      background: #0d1624;
-      border: 1px solid rgba(56,189,248,0.5);
+      background: var(--label-bg);
+      border: 1px solid var(--cyan-border-strong);
       border-radius: 20px;
       padding: clamp(2px,0.3vh,4px) clamp(8px,0.9vw,14px);
     }
     .cam-slot.is-director .cam-label {
       color: var(--amber);
-      border-color: rgba(251,191,36,0.55);
+      border-color: var(--amber-border-strong);
     }
 
     .cam-avatar {
@@ -350,14 +429,14 @@
 
     /* Slot states — applied to .cam-slot */
     .cam-slot.is-empty   { opacity: 0.35; }
-    .cam-slot.all-declined .cam-box  { opacity: 0.55; border-color: rgba(248,113,113,0.3); }
-    .cam-slot.all-declined .cam-box::before { background: rgba(248,113,113,0.1); }
+    .cam-slot.all-declined .cam-box  { opacity: 0.55; border-color: var(--danger-border); }
+    .cam-slot.all-declined .cam-box::before { background: var(--danger-bg); }
     .cam-slot.all-declined .cam-label {
-      color: rgba(248,113,113,0.85);
-      border-color: rgba(248,113,113,0.5);
+      color: var(--danger);
+      border-color: var(--danger-border);
     }
     .cam-name-empty    { color: var(--dim); font-style: italic; font-weight: 500; }
-    .cam-name-declined { color: rgba(248,113,113,0.6); }
+    .cam-name-declined { color: var(--danger); }
 
     /* ══════════════════════════════════════
        STATES
@@ -369,16 +448,16 @@
     }
     .spinner {
       width: 28px; height: 28px;
-      border: 3px solid rgba(167,139,250,0.18);
+      border: 3px solid var(--purple-border-soft);
       border-top-color: var(--purple);
       border-radius: 50%; animation: spin 0.75s linear infinite;
     }
     .state-msg { font-size: 13px; color: var(--muted); }
-    .err-msg { color: rgba(255,100,100,0.7); font-size: 12px; max-width: 440px; text-align: center; white-space: pre-wrap; }
+    .err-msg { color: var(--danger-text); font-size: 12px; max-width: 440px; text-align: center; white-space: pre-wrap; }
     .retry-btn {
       margin-top: 4px; padding: 5px 16px;
-      background: rgba(255,80,80,0.12); border: 1px solid rgba(255,80,80,0.28);
-      border-radius: 20px; color: #ff7070; font-size: 12px; font-family: inherit; cursor: pointer;
+      background: var(--danger-bg); border: 1px solid var(--danger-border);
+      border-radius: 20px; color: var(--danger); font-size: 12px; font-family: inherit; cursor: pointer;
     }
   </style>
 </head>
@@ -401,6 +480,10 @@
             <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
           </svg>
           Refresh
+        </button>
+        <button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch color mode">
+          <span class="theme-icon" aria-hidden="true">D</span>
+          <span class="theme-text">Dark</span>
         </button>
       </div>
     </div>
@@ -441,6 +524,7 @@ const CFG = {
   BAND_TEAM_NAMES   : ['band', 'vocal'],     // lowercase substring matches
   DIRECTOR_KEYWORDS : ['director', 'td', 'tech dir', 'broadcast'],
 };
+const THEME_KEY = 'pco-theme';
 
 // Consistent avatar gradients keyed by name hash
 const PALETTES = [
@@ -465,8 +549,30 @@ function palette(name) {
 // ─── State ────────────────────────────────────────────────────────────────────
 const S = { serviceTypeId: null, plans: [], currentPlanId: null, serviceTimes: [], countdownTimer: null };
 
+function applyTheme(theme, persist = true) {
+  const nextTheme = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = nextTheme;
+  if (persist) {
+    try { localStorage.setItem(THEME_KEY, nextTheme); } catch (_) {}
+  }
+
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+
+  const isLight = nextTheme === 'light';
+  btn.setAttribute('aria-pressed', String(isLight));
+  btn.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+  btn.querySelector('.theme-icon').textContent = isLight ? 'L' : 'D';
+  btn.querySelector('.theme-text').textContent = isLight ? 'Light' : 'Dark';
+}
+
+function toggleTheme() {
+  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+}
+
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 async function init() {
+  applyTheme(document.documentElement.dataset.theme || 'dark', false);
   try {
     showSongsState('loading', 'Connecting to Planning Center…');
     const stData = await get('/api/service-types');
