@@ -168,8 +168,9 @@
       transition: color 0.2s, border-color 0.2s;
     }
     #refresh-btn:hover { color: var(--cyan); border-color: var(--cyan-border-strong); }
+    .spin-icon { display: block; transform-box: fill-box; transform-origin: center; }
     #refresh-btn.spinning .spin-icon { animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin { to { transform: rotate(-360deg); } }
 
     .header-center { text-align: center; }
     .service-title { font-size: clamp(16px,2.1vh,28px); font-weight: 800; letter-spacing: 0.01em; }
@@ -319,6 +320,11 @@
     .song-name {
       font-size: clamp(17px,2.2vh,32px); font-weight: 800;
       text-align: center; line-height: 1.2;
+    }
+    .song-subtitle {
+      font-size: clamp(11px,1.35vh,19px); font-weight: 600;
+      color: var(--muted); text-align: center; line-height: 1.2;
+      margin-top: clamp(-4px,-0.4vh,-1px);
     }
 
     /* Description info bubbles */
@@ -477,9 +483,62 @@
       background: var(--danger-bg); border: 1px solid var(--danger-border);
       border-radius: 20px; color: var(--danger); font-size: 12px; font-family: inherit; cursor: pointer;
     }
+
+    /* ══════════════════════════════════════
+       ANIMATIONS
+    ══════════════════════════════════════ */
+    @keyframes card-slide-in {
+      from { opacity: 0; transform: translateX(-28px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes song-changed-pulse {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(251,146,60,0),   0 0 24px 4px rgba(251,146,60,0);    }
+      50%       { box-shadow: 0 0 0 2px rgba(251,146,60,0.7), 0 0 36px 10px rgba(251,146,60,0.28); }
+    }
+    .song-box.song-changed {
+      animation: song-changed-pulse 1.8s ease-in-out infinite !important;
+      border-color: rgba(251,146,60,0.55) !important;
+      cursor: pointer;
+    }
+    .song-changed-badge {
+      position: absolute;
+      top: calc(clamp(10px,1.2vh,16px) + clamp(13px,1.6vh,20px) + clamp(3px,0.4vh,6px) + clamp(4px,0.5vh,8px) + 2px);
+      left: 50%; transform: translateX(-50%);
+      font-size: clamp(7px,0.8vh,11px); font-weight: 800;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--amber); background: var(--amber-bg);
+      border: 1px solid var(--amber-border-strong);
+      border-radius: 20px;
+      padding: clamp(1px,0.2vh,3px) clamp(6px,0.7vw,10px);
+      white-space: nowrap; z-index: 2;
+    }
+
+    .time-chip.time-chip-past {
+      opacity: 0.3;
+      filter: grayscale(0.7);
+      transition: opacity 0.8s ease, filter 0.8s ease;
+    }
+
+    .test-mode-badge {
+      font-size: clamp(9px,1vh,12px); font-weight: 800;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--danger); background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      border-radius: 20px; padding: 3px 10px;
+      animation: pulse-live 2s ease-in-out infinite;
+    }
+
+    #particles {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      z-index: -1; pointer-events: none;
+    }
   </style>
 </head>
 <body>
+
+<canvas id="particles"></canvas>
 
 <!-- ═══════════════ HEADER ═══════════════ -->
 <header>
@@ -494,8 +553,8 @@
           <option>Loading plans…</option>
         </select>
         <button id="refresh-btn" onclick="refresh()">
-          <svg class="spin-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+          <svg class="spin-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M12 3a9 9 0 1 0 9 9"/>
           </svg>
           Refresh
         </button>
@@ -559,12 +618,31 @@ function palette(name) {
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
-const S = { serviceTypeId: null, plans: [], currentPlanId: null, serviceTimes: [], countdownTimer: null };
+const S = {
+  serviceTypeId: null,
+  plans: [],
+  currentPlanId: null,
+  serviceTimes: [],
+  countdownTimer: null,
+  timeChipEls: [],       // refs to .time-chip spans for greying
+  pollTimer: null,       // background 60s poll handle
+  songTitles: {},        // { [item.id]: title } snapshot from last render
+  changedSongs: new Set(), // item IDs flagged changed, cleared on card click
+  testMode: new URLSearchParams(location.search).has('test'),
+};
 
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 async function init() {
   try {
+    // Show test mode badge in header controls if ?test param present
+    if (S.testMode && !document.getElementById('test-mode-badge')) {
+      const badge = document.createElement('span');
+      badge.id = 'test-mode-badge';
+      badge.className = 'test-mode-badge';
+      badge.textContent = '🔴 TEST MODE';
+      document.querySelector('.header-controls').appendChild(badge);
+    }
     showSongsState('loading', 'Connecting to Planning Center…');
     const stData = await get('/api/service-types');
     const st = (stData.data || []).find(x => x.attributes.name === CFG.SERVICE_TYPE_NAME);
@@ -650,6 +728,7 @@ function renderHeader(plan, planTimes) {
 
   // Store timestamps and build chip + countdown wrappers
   S.serviceTimes = serviceTimes.map(t => new Date(t.attributes.starts_at).getTime());
+  S.timeChipEls = [];
 
   serviceTimes.forEach((t, i) => {
     const wrap = document.createElement('div');
@@ -658,6 +737,7 @@ function renderHeader(plan, planTimes) {
     const chip = document.createElement('span');
     chip.className = 'time-chip';
     chip.textContent = fmtTime(t.attributes.starts_at);
+    S.timeChipEls[i] = chip; // store ref for greying
 
     const cd = document.createElement('div');
     cd.className = 'svc-countdown';
@@ -714,6 +794,9 @@ function renderSongs(items, allMembers, personMap, planId) {
     const arrData  = arrId  ? arrMap[arrId]   : null;
 
     const title    = songData?.attributes?.title || attr.title || 'Untitled';
+    const titleMatch = title.match(/^(.*?)\s*(\(.*\))\s*$/);
+    const titleMain  = titleMatch ? titleMatch[1].trim() : title;
+    const titleSub   = titleMatch ? titleMatch[2].trim() : null;
     const key      = attr.key_name || '';
     const notesKey = `pco_note_${planId}_${item.id}`;
     const saved    = localStorage.getItem(notesKey) || '';
@@ -747,20 +830,46 @@ function renderSongs(items, allMembers, personMap, planId) {
       pillsHtml = `<span class="lead-pill">TBD</span>`;
     }
 
+    const isChanged = S.changedSongs.has(item.id);
+
     const box = document.createElement('div');
-    box.className = 'song-box';
+    box.className = 'song-box' + (isChanged ? ' song-changed' : '');
+    box.style.opacity = '0';
+    box.style.animation = `card-slide-in 0.4s ease forwards`;
+    box.style.animationDelay = `${idx * 0.07}s`;
     box.innerHTML = `
       <span class="song-number">Song ${idx + 1}${key ? '  ·  ' + esc(key) : ''}</span>
+      ${isChanged ? '<span class="song-changed-badge">Updated</span>' : ''}
       <span class="song-note-icon">♪</span>
       <div class="song-main">
         <div class="avatars">${avatarsHtml}</div>
         ${pillsHtml ? `<div class="leads-badges">${pillsHtml}</div>` : ''}
-        <div class="song-name">${esc(title)}</div>
+        <div class="song-name">${esc(titleMain)}</div>
+        ${titleSub ? `<div class="song-subtitle">${esc(titleSub)}</div>` : ''}
         ${bubblesHtml ? `<div class="desc-bubbles">${bubblesHtml}</div>` : ''}
         <textarea class="notes-ta" placeholder="Add notes…" data-key="${notesKey}" oninput="saveNote(this)">${esc(saved)}</textarea>
       </div>
     `;
+
+    // Dismiss alert on click
+    if (isChanged) {
+      box.addEventListener('click', () => {
+        S.changedSongs.delete(item.id);
+        box.classList.remove('song-changed');
+        box.querySelector('.song-changed-badge')?.remove();
+        box.style.animation = ''; // clear override so normal styles apply
+      }, { once: true });
+    }
+
     section.appendChild(box);
+  });
+
+  // Snapshot current titles for change detection on the next poll
+  S.songTitles = {};
+  songs.forEach(item => {
+    const sid = item.relationships?.song?.data?.id;
+    const sd  = sid ? songMap[sid] : null;
+    S.songTitles[item.id] = sd?.attributes?.title || item.attributes.title || '';
   });
 }
 
@@ -793,7 +902,7 @@ function renderVideoTeam(allMembers, personMap) {
   section.style.gridTemplateColumns = `repeat(${VIDEO_POSITIONS.length}, 1fr)`;
   section.innerHTML = '';
 
-  VIDEO_POSITIONS.forEach(pos => {
+  VIDEO_POSITIONS.forEach((pos, idx) => {
     // Everyone in this position slot (confirmed or declined)
     const members   = allVideoRaw.filter(m => pos.re.test(m.attributes.team_position_name || ''));
     const confirmed = members.filter(m => m.attributes.status !== 'D');
@@ -855,6 +964,9 @@ function renderVideoTeam(allMembers, personMap) {
     // Build: slot > label (floating) + cam-box (card content, overflow:hidden)
     const slot = document.createElement('div');
     slot.className = slotClass;
+    slot.style.opacity = '0';
+    slot.style.animation = `card-slide-in 0.4s ease forwards`;
+    slot.style.animationDelay = `${idx * 0.04}s`;
 
     const label = document.createElement('div');
     label.className = 'cam-label';
@@ -959,7 +1071,7 @@ function getPhoto(member, personMap) {
 }
 
 // ─── Countdown Timer ──────────────────────────────────────────────────────────
-const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000; // treat as LIVE for up to 2h after start
+const LIVE_WINDOW_MS = 1 * 60 * 60 * 1000; // treat as LIVE for up to 1h after start
 
 function updateCountdowns() {
   const now = Date.now();
@@ -967,8 +1079,12 @@ function updateCountdowns() {
   // Find the first service time still in the future
   const nextIdx = S.serviceTimes.findIndex(t => t > now);
 
+  // Track whether any service is currently live (for poll gating)
+  let anyLive = false;
+
   S.serviceTimes.forEach((t, i) => {
-    const el = document.getElementById(`svc-cd-${i}`);
+    const el   = document.getElementById(`svc-cd-${i}`);
+    const chip = S.timeChipEls[i];
     if (!el) return;
     const diff = t - now; // positive = future, negative = past
 
@@ -977,19 +1093,82 @@ function updateCountdowns() {
       el.textContent = fmtCountdown(diff);
       el.className = 'svc-countdown';
       el.style.visibility = '';
+      if (chip) chip.classList.remove('time-chip-past');
     } else if (diff <= 0 && diff > -LIVE_WINDOW_MS) {
-      // Service started, within 2h window — show LIVE
+      // Service started, within 1h window — show LIVE
       el.textContent = '● LIVE';
       el.className = 'svc-countdown is-live';
       el.style.visibility = '';
+      if (chip) chip.classList.remove('time-chip-past');
+      anyLive = true;
     } else {
-      // Not next, or more than 2h past — hide
+      // Not next, or more than 1h past — hide countdown, grey chip
       el.style.visibility = 'hidden';
+      if (chip) chip.classList.add('time-chip-past');
+    }
+  });
+
+  // Start or stop background polling based on live state
+  if (anyLive || S.testMode) {
+    startPolling();
+  } else {
+    stopPolling();
+  }
+}
+
+// ─── Background Polling ───────────────────────────────────────────────────────
+function startPolling() {
+  if (S.pollTimer) return; // already running
+  S.pollTimer = setInterval(async () => {
+    if (!S.currentPlanId || !S.serviceTypeId) return;
+    try {
+      const d = await get(`/api/plan?serviceTypeId=${S.serviceTypeId}&planId=${S.currentPlanId}`);
+      detectSongChanges(d.items);
+      renderAll(d, S.currentPlanId);
+    } catch (e) { console.warn('[poll]', e.message); }
+  }, 60_000);
+  console.log('[poll] started');
+}
+
+function stopPolling() {
+  if (!S.pollTimer) return;
+  clearInterval(S.pollTimer);
+  S.pollTimer = null;
+  console.log('[poll] stopped');
+}
+
+// ─── Song Change Detection ────────────────────────────────────────────────────
+function detectSongChanges(items) {
+  // Only flag changes during live window (or test mode)
+  const isLive = S.serviceTimes.some(t => {
+    const diff = t - Date.now();
+    return diff <= 0 && diff > -LIVE_WINDOW_MS;
+  });
+  if (!isLive && !S.testMode) return;
+
+  const songs  = (items.data || []).filter(i => i.attributes.item_type === 'song');
+  const songMap = buildMap(items.included || [], 'Song');
+
+  songs.forEach(item => {
+    const songData = item.relationships?.song?.data?.id
+      ? songMap[item.relationships.song.data.id] : null;
+    const newTitle = songData?.attributes?.title || item.attributes.title || '';
+    const oldTitle = S.songTitles[item.id];
+
+    // oldTitle undefined means this is the first render — don't flag
+    if (oldTitle !== undefined && oldTitle !== newTitle) {
+      S.changedSongs.add(item.id);
+      console.log(`[change] Song changed: "${oldTitle}" → "${newTitle}"`);
     }
   });
 }
 
 function fmtCountdown(ms) {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  if (ms >= DAY_MS) {
+    const days = Math.floor(ms / DAY_MS);
+    return `${days} ${days === 1 ? 'day' : 'days'}`;
+  }
   const totalSec = Math.floor(ms / 1000);
   const h   = Math.floor(totalSec / 3600);
   const m   = Math.floor((totalSec % 3600) / 60);
@@ -1077,6 +1256,59 @@ function showSongsState(type, msg) {
       </div>`;
   }
 }
+
+// ─── Particles ────────────────────────────────────────────────────────────────
+(function initParticles() {
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles;
+
+  const COLORS = [
+    [167, 139, 250], // purple
+    [56,  189, 248], // cyan
+    [251, 191,  36], // amber
+  ];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function mkParticle() {
+    const c = COLORS[Math.floor(Math.random() * COLORS.length)];
+    return {
+      x:     Math.random() * W,
+      y:     Math.random() * H,
+      r:     Math.random() * 1.2 + 0.3,
+      vx:    (Math.random() - 0.5) * 0.12,
+      vy:    -(Math.random() * 0.25 + 0.06),
+      alpha: Math.random() * 0.08 + 0.16,
+      color: c,
+    };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) {
+      const [r, g, b] = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${p.alpha})`;
+      ctx.fill();
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.y < -2)    { p.y = H + 2; p.x = Math.random() * W; }
+      if (p.x < -2)    { p.x = W + 2; }
+      if (p.x > W + 2) { p.x = -2;    }
+    }
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  particles = Array.from({ length: 90 }, mkParticle);
+  draw();
+})();
 
 document.addEventListener('DOMContentLoaded', init);
 </script>

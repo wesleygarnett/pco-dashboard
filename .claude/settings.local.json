@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir)"
+      "Bash(dir)",
+      "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\wesle\\\\Documents\\\\Claude\\\\Dash\\\\Service Overview Dashboard\\\\pco-dashboard\\\\.claude\")",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }
