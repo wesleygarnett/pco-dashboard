@@ -24,12 +24,18 @@ jobs:
             os: windows-latest
             script: npm run dist:win
             artifact_name: windows-dist
-            artifact_path: dist/*
+            artifact_path: |
+              dist/*.exe
+              dist/*.yml
+              dist/*.blockmap
           - name: macOS
             os: macos-latest
             script: npm run dist:mac
             artifact_name: macos-dist
-            artifact_path: dist/*
+            artifact_path: |
+              dist/*.dmg
+              dist/*.zip
+              dist/*.blockmap
 
     steps:
       - name: Check out repository
@@ -81,6 +87,23 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish release assets
-        run: gh release upload "${GITHUB_REF_NAME}" release-assets/windows/** release-assets/macos/** --clobber
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(
+            release-assets/windows/*.exe
+            release-assets/windows/*.yml
+            release-assets/windows/*.blockmap
+            release-assets/macos/*.dmg
+            release-assets/macos/*.zip
+            release-assets/macos/*.blockmap
+          )
+
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No release files found to upload."
+            exit 1
+          fi
+
+          gh release upload "${GITHUB_REF_NAME}" "${files[@]}" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

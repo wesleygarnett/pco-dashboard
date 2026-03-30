@@ -1,100 +1,158 @@
-# PCO Service Dashboard — Project Context
+# PCO Service Dashboard - Project Context
 
-## What this is
-A fullscreen web dashboard for Free Chapel Gainesville's Sunday services, displayed on a meeting room TV via screenshare. Built with Node.js + Express (server) and a single HTML/CSS/JS file (frontend). The server proxies Planning Center Online (PCO) API calls to avoid CORS issues.
+## Current state
+- The project now supports **two run modes**:
+  - **Electron desktop app** for normal end users
+  - **Standalone Node/Express web app** for local browser testing and Render
+- Current working branch on GitHub: `codex/app`
+- `main` is intentionally being kept safer/stabler for the currently live hosted version
+- GitHub release tags created so far:
+  - `v1.0.0` triggered the first release workflow but uploaded far too many assets
+  - `v1.0.1` was created after hardening the workflow
+
+## Most important files
+- [app-server.js](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/app-server.js)
+  Shared backend for both Electron and standalone server mode.
+- [electron-main.js](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/electron-main.js)
+  Electron main process that starts the internal server and opens the app window.
+- [server.js](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/server.js)
+  Standalone web/server entrypoint for Render and browser-only local dev.
+- [public/index.html](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/public/index.html)
+  Entire renderer UI in one HTML file: dashboard, setup wizard, settings modal, CSS, JS.
+- [package.json](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/package.json)
+  Electron scripts and electron-builder config live here.
+- [.github/workflows/release-desktop.yml](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/.github/workflows/release-desktop.yml)
+  GitHub Actions workflow for Windows/macOS desktop release builds.
 
 ## How to run locally
+
+### Electron desktop app
 ```bash
-npm install        # first time only
-node server.js     # or: nodemon server.js for auto-restart
-```
-Then open Chrome → http://localhost:3000
-
-## Deployment
-- **GitHub repo:** push changes here, Render auto-deploys
-- **Live URL:** on Render (check render.com dashboard)
-- **Credentials:** stored in `.env` locally and in Render environment variables — never hardcoded
-
-## File structure
-```
-server.js          — Express server, PCO API proxy, pagination handling
-public/index.html  — Entire frontend: HTML + CSS + JS in one file
-.env               — Local credentials (gitignored, never commit)
-.env.example       — Safe template showing required env var names
-.gitignore         — Blocks .env and node_modules from GitHub
-start-mac.sh       — Double-click launcher for Mac
-SETUP.txt          — Full setup guide for Mac, Windows, and Render
+npm install
+npm run electron
 ```
 
-## Architecture decisions
-- **Single file frontend** (`public/index.html`) — all CSS and JS inline, intentional
-- **No build step** — vanilla JS, no React/Vue/bundler
-- **node-fetch v2** — CommonJS compatible (v3 is ESM only, breaks with require())
-- **dotenv** — loaded with try/catch so it's optional (Render sets env vars natively)
+### Packaged Windows build
+```bash
+npm exec electron-builder -- --dir
+```
+This creates an unpacked Windows app in `dist/win-unpacked`.
 
-## Planning Center API
-- Auth: Basic Auth with PCO_APP_ID + PCO_SECRET
-- **team_members uses `pcoAll()`** — PCO caps per_page at 100; large plans need pagination
-- Team name resolved via `include=person,team` + relationship lookup (not direct attribute)
-- Song leaders parsed from item `description` field — format: `+ Lead: Name, Name`
-- Song leader matching is fuzzy (first/last name substring)
-
-## UI layout
-- CSS Grid: `grid-template-rows: 11.5% 1fr 20%` (header / songs / cameras)
-- Dark glassmorphic design — bg `#080b10`, rgba glass cards, backdrop-filter blur
-- Inter font (Google Fonts)
-- CSS `clamp()` throughout for TV-readable responsive sizing
-
-## Header (3-column grid)
-- **Left:** Free Chapel Gainesville logo/icon, plan selector dropdown, refresh button
-- **Center:** Plan name + date
-- **Right:** Service time chips (filtered to `time_type === 'service'`, max 2) + countdown timer + speaker
-
-## Countdown timer
-- Updates every second via `setInterval`
-- Next upcoming service shows live countdown (green)
-- Service past start time shows `● LIVE` in red, pulsing animation
-- Clears after 2 hours post-start
-
-## Song cards
-- Leaders parsed from item description (`+ Lead: Name, Name`, up to 3)
-- Matched against Band/Vocal team members for photos
-- Unmatched names get initials avatars — all parsed names always shown
-- Description bubbles: rest of description (non-Lead lines) shown as small pills
-- Director's notes: plain orange textarea, saves to localStorage per plan+item ID
-- No song author/writer shown
-
-## Video Production Team
-- **Hardcoded position slots** — always rendered regardless of PCO assignments:
-  `DIRECTOR, BROADCAST DIR, CAM 1–10, CAM 11/12`
-- Slot states: normal (confirmed), greyed (unassigned), red+dimmed (all declined)
-- Multiple confirmed people in one slot: overlapping avatars, names with `+` between
-- Floating position label pill sits on the top border of each card
-- Declined members filtered out of confirmed display
-
-## Key JS functions
-- `pcoAll(endpoint)` — server-side: fetches all paginated pages
-- `resolveTeamName(member, teamMap)` — tries attribute then relationship lookup
-- `parseLeaderNames(description)` — strips HTML, regex matches Lead: line
-- `parseDescriptionBubbles(description)` — everything except Lead: line, split on `+`
-- `matchLeaders(leaderNames, bandMembers)` — returns parallel array (member|null)
-- `memberAvatarHtml(member, personMap, zIndex)` — photo if available, initials fallback
-- `updateCountdowns()` — runs every second, drives countdown/LIVE display
-- `renderVideoTeam()` — maps PCO data onto VIDEO_POSITIONS hardcoded slots
-
-## Config (top of index.html JS)
-```js
-const CFG = {
-  SERVICE_TYPE_NAME : 'Free Chapel Gainesville Sunday AM Services',
-  VIDEO_TEAM_NAME   : 'video production',   // lowercase substring match
-  BAND_TEAM_NAMES   : ['band', 'vocal'],
-  DIRECTOR_KEYWORDS : ['director', 'td', 'tech dir', 'broadcast'],
-};
+### Full installer build
+```bash
+npm run dist
 ```
 
-## Known gotchas
-- **node-fetch must stay at v2** — do not upgrade to v3
-- **Per_page 200 doesn't work** — PCO silently caps at 100, always use pcoAll for team_members
-- Photo URLs must be proxied through `/api/photo-proxy` — direct browser fetches fail (CORS + auth)
-- `overflow: hidden` on `.cam-box` is required for glow containment — label lives on `.cam-slot` wrapper
-- Director's notes persist in localStorage, not PCO — they are device/browser specific
+### Standalone server mode
+```bash
+npm install
+node server.js
+```
+Then open `http://127.0.0.1:3000`
+
+## App architecture
+- **Renderer stays single-file** in `public/index.html`
+- **Electron uses localhost fetches** rather than a big IPC rewrite
+- **app-server.js** exposes a reusable `createServer()` factory so Electron can start the backend itself
+- **server.js** still exists for hosted/web mode
+
+## Settings + setup flow
+- Settings are no longer hardcoded in `index.html`
+- Desktop settings are stored in a per-user settings file outside the repo
+- `GET /api/settings` returns current settings plus:
+  - `hasSecret`
+  - `envLocked`
+  - `setupRequired`
+- `POST /api/settings/test-credentials`
+  - validates PCO credentials
+  - returns service types on success
+- `POST /api/settings`
+  - saves settings
+  - hot-reloads credentials
+- `POST /api/settings/reset`
+  - clears local saved settings
+
+### Important settings behavior
+- Secret handling uses `hasSecret`; the API does **not** echo raw secrets back
+- Blank secret input in the settings modal means “keep the existing secret”
+- Team-matching values are normalized to lowercase on save and when applied in the renderer
+- Video position regex patterns are validated server-side before save
+
+## UI changes already made
+- Added a **first-run setup wizard**
+- Added a **gear/settings modal**
+- Added `applySettings()`
+- Added `resetRuntimeState()` to clear stale timers/state before reloads
+- `serviceTypeId` is now the canonical service selection
+- `fmtDate()` / `fmtTime()` use configurable timezone
+- `startPolling()` uses configurable polling interval
+
+## Important bug fix already made
+- The “all cameras show unassigned” regression was fixed by normalizing:
+  - `videoTeamName`
+  - `bandTeamNames`
+  - `directorKeywords`
+- If this issue appears again, first inspect saved settings values and confirm they match actual PCO team names / position names.
+
+## Planning Center specifics
+- Auth is Basic Auth with `PCO_APP_ID` + `PCO_SECRET`
+- `team_members` still requires pagination via `pcoAll()`
+- Team name resolution still uses `include=person,team` + relationship lookup
+- Photo URLs must still be proxied through `/api/photo-proxy`
+
+## Electron packaging notes
+- `electron-builder` is configured in `package.json`
+- `signAndEditExecutable` is disabled for Windows because that avoided a local packaging failure in this environment
+- A Windows unpacked build was successfully created locally in `dist/win-unpacked`
+- We did **not** fully validate a macOS package locally because we are working from Windows
+
+## GitHub Releases / Actions
+- Goal: non-technical users download desktop builds from **GitHub Releases**, not from repo files
+- Workflow file: `.github/workflows/release-desktop.yml`
+- It builds:
+  - Windows
+  - macOS
+- It was updated to:
+  - opt into Node 24 for action runtime
+  - use `gh release create` / `gh release upload` instead of the earlier action-based upload step
+
+### Known release issue
+- The first release flow uploaded **way too many assets** because the artifact/release upload patterns are too broad (`dist/*` / release-assets globs)
+- This likely still needs cleanup so Releases only show user-facing files like:
+  - `.exe`
+  - `.dmg`
+  - maybe update metadata if auto-update is ever added
+- Next cleanup task: narrow uploaded artifacts/assets so users don’t see 100+ files
+
+## Render / hosted mode caveat
+- Hosted mode still works via `node server.js`
+- Render should continue using:
+  - Build: `npm install`
+  - Start: `node server.js`
+- Credentials from Render env vars still work
+- **Important caveat**:
+  non-secret app settings are now file-backed, and hosted storage may not persist across redeploys/restarts
+- If hosted behavior matters long-term, consider adding env-based config for the critical hosted settings such as `serviceTypeId`
+
+## Repo cleanup already done
+- README rewritten to reflect Electron + server dual mode
+- `SETUP.txt` rewritten with concise modern instructions
+- `start-mac.sh` relabeled as legacy standalone-server launcher
+- `.gitignore` now excludes:
+  - `.env`
+  - `node_modules`
+  - `.claude/`
+  - `settings.json`
+  - `dist/`
+
+## Known next good tasks
+1. Clean up GitHub Release asset upload patterns so Releases only show final downloadable installers
+2. Decide whether hosted/Render mode should get more env-config support for non-secret settings
+3. Optionally add a proper Windows installer polish pass and app icon/signing work
+4. If desired, merge `codex/app` into `main` only after desktop and hosted behavior are both validated
+
+## Constraints / preferences
+- Keep the single-file frontend unless there is a strong reason to split it
+- Keep `node-fetch` on v2 for CommonJS compatibility
+- Prefer not to break the Render-hosted path while improving the desktop app
+- The user wants to be able to continue in Claude tomorrow with this context intact
