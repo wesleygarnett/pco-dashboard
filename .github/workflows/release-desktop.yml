@@ -9,6 +9,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     name: Build ${{ matrix.platform.name }}
@@ -72,10 +75,12 @@ jobs:
           name: macos-dist
           path: release-assets/macos
 
+      - name: Ensure release exists
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes --verify-tag || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish release assets
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            release-assets/windows/**
-            release-assets/macos/**
-          generate_release_notes: true
+        run: gh release upload "${GITHUB_REF_NAME}" release-assets/windows/** release-assets/macos/** --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
