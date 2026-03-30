@@ -42,6 +42,24 @@ npm exec electron-builder -- --dir
 
 The desktop app stores settings in the app's user data folder, not in the repo.
 
+### GitHub Releases for non-technical downloads
+
+This repo is set up so you can distribute desktop builds through **GitHub Releases** instead of asking people to browse the repo.
+
+- Push source code normally
+- Create and push a version tag like `v1.0.0`
+- GitHub Actions builds the Windows and macOS desktop apps
+- The built files are attached to the GitHub Release automatically
+
+Example:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+After that, non-technical users can go to the repo's **Releases** page and download the app for their platform.
+
 ---
 
 ## Standalone server mode
