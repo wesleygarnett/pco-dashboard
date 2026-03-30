@@ -529,6 +529,243 @@
       animation: pulse-live 2s ease-in-out infinite;
     }
 
+    .icon-btn {
+      background: var(--s2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--muted);
+      padding: 3px 10px;
+      font-size: clamp(10px,1.05vh,13px);
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s, border-color 0.2s, transform 0.2s;
+    }
+    .icon-btn:hover { color: var(--cyan); border-color: var(--cyan-border-strong); transform: translateY(-1px); }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(12px, 2vw, 28px);
+      background: rgba(4, 6, 12, 0.72);
+      backdrop-filter: blur(18px);
+    }
+    .overlay.is-open { display: flex; }
+
+    .panel {
+      width: min(1120px, 96vw);
+      max-height: 92vh;
+      overflow: auto;
+      background: linear-gradient(180deg, rgba(18,24,40,0.96), rgba(9,13,23,0.96));
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: 0 32px 100px rgba(0,0,0,0.38);
+      padding: clamp(20px, 2.4vw, 30px);
+    }
+    :root[data-theme="light"] .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,246,255,0.98));
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .panel-title {
+      font-size: clamp(22px, 2.8vh, 34px);
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+    .panel-subtitle {
+      color: var(--muted);
+      font-size: clamp(12px, 1.2vh, 15px);
+      margin-top: 6px;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+    .panel-close {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      width: 38px;
+      height: 38px;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .setup-steps { display: flex; flex-direction: column; gap: 18px; }
+    .setup-step { display: none; }
+    .setup-step.active { display: block; }
+    .step-card {
+      background: var(--s1);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: clamp(18px, 2vw, 24px);
+    }
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 16px;
+      margin-top: 12px;
+    }
+    .full-span { grid-column: 1 / -1; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .field label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      background: var(--s2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+    .field textarea { min-height: 92px; resize: vertical; }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--cyan-border-strong);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.12);
+    }
+    .field-hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .button-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .button-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .primary-btn, .secondary-btn, .danger-btn {
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .primary-btn {
+      color: #081018;
+      background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+    }
+    .secondary-btn {
+      color: var(--text);
+      background: var(--s2);
+      border-color: var(--border);
+    }
+    .danger-btn {
+      color: var(--danger);
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+    }
+
+    .setup-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .setup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--dim);
+      border: 1px solid var(--border);
+    }
+    .setup-dot.active { background: var(--cyan); border-color: var(--cyan-border-strong); }
+
+    .status-line {
+      min-height: 20px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+    .status-line.is-ok { color: var(--green); }
+    .status-line.is-error { color: var(--danger); }
+
+    .positions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .position-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 0.9fr) minmax(220px, 1.4fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      background: var(--s2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px;
+    }
+    .position-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--cyan);
+    }
+    .position-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .settings-sections {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .section-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--cyan);
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .step-grid { grid-template-columns: 1fr; }
+      .position-row { grid-template-columns: 1fr; }
+      .panel { width: 100%; max-height: 100vh; border-radius: 0; }
+      .overlay { padding: 0; }
+    }
+
     #particles {
       position: fixed; inset: 0;
       width: 100%; height: 100%;
@@ -558,6 +795,10 @@
           </svg>
           Refresh
         </button>
+        <button id="settings-btn" class="icon-btn" onclick="openSettings()">
+          <span>⚙</span>
+          Settings
+        </button>
       </div>
     </div>
   </div>
@@ -578,6 +819,250 @@
   </div>
 </header>
 
+<div class="overlay" id="setup-overlay" aria-hidden="true">
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Set Up Your Dashboard</div>
+        <div class="panel-subtitle">Connect Planning Center, choose the service type to display, and tune the team matching rules your room uses.</div>
+      </div>
+    </div>
+
+    <div class="setup-steps">
+      <div class="setup-step active" data-step="1">
+        <div class="step-card">
+          <div class="panel-title" style="font-size:clamp(18px,2vh,24px)">Welcome</div>
+          <div class="panel-subtitle">This wizard gets the app from first launch to live dashboard with no file editing.</div>
+          <div class="button-row">
+            <div class="button-group">
+              <button class="primary-btn" onclick="goToSetupStep(2)">Get Started</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-step" data-step="2">
+        <div class="step-card">
+          <div class="panel-title" style="font-size:clamp(18px,2vh,24px)">Planning Center Credentials</div>
+          <div class="step-grid">
+            <div class="field">
+              <label for="setup-pco-app-id">PCO App ID</label>
+              <input id="setup-pco-app-id" type="text" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="setup-pco-secret">PCO Secret</label>
+              <input id="setup-pco-secret" type="password" autocomplete="new-password">
+            </div>
+          </div>
+          <div class="status-line" id="setup-credentials-status"></div>
+          <div class="button-row">
+            <div class="button-group">
+              <button class="secondary-btn" onclick="goToSetupStep(1)">Back</button>
+              <button class="primary-btn" onclick="setupTestCredentials()">Test Connection</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-step" data-step="3">
+        <div class="step-card">
+          <div class="panel-title" style="font-size:clamp(18px,2vh,24px)">Choose a Service Type</div>
+          <div class="step-grid">
+            <div class="field full-span">
+              <label for="setup-service-type">Service Type</label>
+              <select id="setup-service-type"></select>
+              <div class="field-hint">This becomes the default service the dashboard loads when the app opens.</div>
+            </div>
+          </div>
+          <div class="button-row">
+            <div class="button-group">
+              <button class="secondary-btn" onclick="goToSetupStep(2)">Back</button>
+              <button class="primary-btn" onclick="goToSetupStep(4)">Continue</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-step" data-step="4">
+        <div class="step-card">
+          <div class="panel-title" style="font-size:clamp(18px,2vh,24px)">Display and Team Matching</div>
+          <div class="step-grid">
+            <div class="field">
+              <label for="setup-org-name">Organization Name</label>
+              <input id="setup-org-name" type="text">
+            </div>
+            <div class="field">
+              <label for="setup-org-sub">Sub Label</label>
+              <input id="setup-org-sub" type="text">
+            </div>
+            <div class="field">
+              <label for="setup-org-icon">Icon</label>
+              <input id="setup-org-icon" type="text" maxlength="4">
+            </div>
+            <div class="field">
+              <label for="setup-timezone">Timezone</label>
+              <select id="setup-timezone"></select>
+            </div>
+            <div class="field">
+              <label for="setup-video-team-name">Video Team Name</label>
+              <input id="setup-video-team-name" type="text">
+            </div>
+            <div class="field">
+              <label for="setup-band-team-names">Band / Vocal Team Names</label>
+              <input id="setup-band-team-names" type="text">
+            </div>
+            <div class="field full-span">
+              <label for="setup-director-keywords">Director Keywords</label>
+              <input id="setup-director-keywords" type="text">
+            </div>
+          </div>
+          <div class="button-row">
+            <div class="button-group">
+              <button class="secondary-btn" onclick="goToSetupStep(3)">Back</button>
+              <button class="primary-btn" onclick="goToSetupStep(5)">Continue</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-step" data-step="5">
+        <div class="step-card">
+          <div class="panel-title" style="font-size:clamp(18px,2vh,24px)">Video Positions</div>
+          <div class="field-hint">These patterns control how Planning Center position names map onto your camera and director slots.</div>
+          <div class="positions-list" id="setup-positions-list"></div>
+          <div class="position-actions">
+            <button class="secondary-btn" onclick="addPositionRow('setup-positions-list')">Add Position</button>
+            <button class="secondary-btn" onclick="resetPositionRows('setup-positions-list')">Reset to Defaults</button>
+          </div>
+          <div class="status-line" id="setup-save-status"></div>
+          <div class="button-row">
+            <div class="button-group">
+              <button class="secondary-btn" onclick="goToSetupStep(4)">Back</button>
+              <button class="primary-btn" onclick="setupSave()">Save & Launch</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-dots">
+      <div class="setup-dot active" data-dot="1"></div>
+      <div class="setup-dot" data-dot="2"></div>
+      <div class="setup-dot" data-dot="3"></div>
+      <div class="setup-dot" data-dot="4"></div>
+      <div class="setup-dot" data-dot="5"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="settings-overlay" aria-hidden="true">
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Dashboard Settings</div>
+        <div class="panel-subtitle">Adjust credentials, organization labels, polling, team matching, and video slot patterns without leaving the app.</div>
+      </div>
+      <button class="panel-close" onclick="closeSettings()">×</button>
+    </div>
+
+    <div class="settings-sections">
+      <div class="step-card">
+        <div class="section-title">Credentials</div>
+        <div class="step-grid">
+          <div class="field">
+            <label for="settings-pco-app-id">PCO App ID</label>
+            <input id="settings-pco-app-id" type="text" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="settings-pco-secret">PCO Secret</label>
+            <input id="settings-pco-secret" type="password" autocomplete="new-password" placeholder="Leave blank to keep current secret">
+          </div>
+        </div>
+        <div class="status-line" id="settings-credentials-status"></div>
+        <div class="button-row">
+          <div class="button-group">
+            <button class="secondary-btn" onclick="settingsTestCredentials()">Test Connection</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="section-title">Service and Display</div>
+        <div class="step-grid">
+          <div class="field full-span">
+            <label for="settings-service-type">Service Type</label>
+            <select id="settings-service-type"></select>
+          </div>
+          <div class="field">
+            <label for="settings-org-name">Organization Name</label>
+            <input id="settings-org-name" type="text">
+          </div>
+          <div class="field">
+            <label for="settings-org-sub">Sub Label</label>
+            <input id="settings-org-sub" type="text">
+          </div>
+          <div class="field">
+            <label for="settings-org-icon">Icon</label>
+            <input id="settings-org-icon" type="text" maxlength="4">
+          </div>
+          <div class="field">
+            <label for="settings-timezone">Timezone</label>
+            <select id="settings-timezone"></select>
+          </div>
+          <div class="field">
+            <label for="settings-poll-interval">Poll Interval</label>
+            <select id="settings-poll-interval">
+              <option value="30000">30 seconds</option>
+              <option value="60000">1 minute</option>
+              <option value="120000">2 minutes</option>
+              <option value="300000">5 minutes</option>
+              <option value="0">Off</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="section-title">Team Matching</div>
+        <div class="step-grid">
+          <div class="field">
+            <label for="settings-video-team-name">Video Team Name</label>
+            <input id="settings-video-team-name" type="text">
+          </div>
+          <div class="field">
+            <label for="settings-band-team-names">Band / Vocal Team Names</label>
+            <input id="settings-band-team-names" type="text">
+          </div>
+          <div class="field full-span">
+            <label for="settings-director-keywords">Director Keywords</label>
+            <input id="settings-director-keywords" type="text">
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="section-title">Video Positions</div>
+        <div class="positions-list" id="settings-positions-list"></div>
+        <div class="position-actions">
+          <button class="secondary-btn" onclick="addPositionRow('settings-positions-list')">Add Position</button>
+          <button class="secondary-btn" onclick="resetPositionRows('settings-positions-list')">Reset to Defaults</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-line" id="settings-save-status"></div>
+    <div class="button-row">
+      <div class="button-group">
+        <button class="danger-btn" onclick="resetAllSettings()">Reset All Settings</button>
+      </div>
+      <div class="button-group">
+        <button class="secondary-btn" onclick="closeSettings()">Close</button>
+        <button class="primary-btn" onclick="saveSettings()">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════ SONGS ═══════════════ -->
 <div class="songs-section" id="songs-section">
   <div class="state-wrap">
@@ -592,8 +1077,14 @@
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
 const CFG = {
-  SERVICE_TYPE_NAME : 'Free Chapel Gainesville Sunday AM Services',
+  SERVICE_TYPE_ID   : '',
+  SERVICE_TYPE_NAME : '',
   VIDEO_TEAM_NAME   : 'video production',   // lowercase substring match
+  POLL_INTERVAL_MS  : 60000,
+  TIMEZONE          : 'America/New_York',
+  ORG_NAME          : 'My Church',
+  ORG_SUB           : 'Sunday Services',
+  ORG_ICON          : '⛪',
   BAND_TEAM_NAMES   : ['band', 'vocal'],     // lowercase substring matches
   DIRECTOR_KEYWORDS : ['director', 'td', 'tech dir', 'broadcast'],
 };
@@ -631,27 +1122,410 @@ const S = {
   testMode: new URLSearchParams(location.search).has('test'),
 };
 
+const UI = {
+  latestSettings: null,
+  setupStep: 1,
+  defaultVideoPositions: [
+    { label: 'DIRECTOR', pattern: 'main\\s*director', isDir: true },
+    { label: 'BROADCAST DIR', pattern: 'broadcast\\s*director', isDir: true },
+    { label: 'CAM 1', pattern: 'camera\\s*0?1\\b', isDir: false },
+    { label: 'CAM 2', pattern: 'camera\\s*0?2\\b', isDir: false },
+    { label: 'CAM 3', pattern: 'camera\\s*0?3\\b', isDir: false },
+    { label: 'CAM 4', pattern: 'camera\\s*0?4\\b', isDir: false },
+    { label: 'CAM 5', pattern: 'camera\\s*0?5\\b', isDir: false },
+    { label: 'CAM 6', pattern: 'camera\\s*0?6\\b', isDir: false },
+    { label: 'CAM 7', pattern: 'camera\\s*0?7\\b', isDir: false },
+    { label: 'CAM 8', pattern: 'camera\\s*0?8\\b', isDir: false },
+    { label: 'CAM 9', pattern: 'camera\\s*0?9\\b', isDir: false },
+    { label: 'CAM 10', pattern: 'camera\\s*10\\b', isDir: false },
+    { label: 'CAM 11/12', pattern: 'camera\\s*1[12]\\b|ptz', isDir: false },
+  ],
+};
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
+
+// ─── Boot + Settings ──────────────────────────────────────────────────────────
+function ensureTestModeBadge() {
+  if (!S.testMode || document.getElementById('test-mode-badge')) return;
+  const badge = document.createElement('span');
+  badge.id = 'test-mode-badge';
+  badge.className = 'test-mode-badge';
+  badge.textContent = '🔴 TEST MODE';
+  document.querySelector('.header-controls').appendChild(badge);
+}
+
+function getDefaultVideoPositions() {
+  return UI.defaultVideoPositions.map(item => ({ ...item }));
+}
+
+function getTimezoneOptions() {
+  if (Intl.supportedValuesOf) return Intl.supportedValuesOf('timeZone');
+  return ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles'];
+}
+
+function populateTimezoneSelect(selectId, value) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const zones = getTimezoneOptions();
+  select.innerHTML = zones.map(zone => `<option value="${esc(zone)}">${esc(zone)}</option>`).join('');
+  select.value = zones.includes(value) ? value : 'America/New_York';
+}
+
+function populateServiceTypeSelect(selectId, serviceTypes, selectedId) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const rows = (serviceTypes?.data || []).slice().sort((a, b) =>
+    (a.attributes?.name || '').localeCompare(b.attributes?.name || '')
+  );
+  select.innerHTML = rows.map(item =>
+    `<option value="${esc(item.id)}">${esc(item.attributes?.name || 'Unnamed service type')}</option>`
+  ).join('');
+  if (selectedId && rows.some(item => item.id === selectedId)) {
+    select.value = selectedId;
+  } else if (rows[0]) {
+    select.value = rows[0].id;
+  }
+}
+
+function makePositionRow(position = {}) {
+  const row = document.createElement('div');
+  row.className = 'position-row';
+  row.innerHTML = `
+    <input type="text" class="position-label" placeholder="Label" value="${esc(position.label || '')}">
+    <input type="text" class="position-pattern" placeholder="Regex pattern" value="${esc(position.pattern || '')}">
+    <label class="field-hint" style="display:flex;align-items:center;gap:8px;margin:0">
+      <input type="checkbox" class="position-is-dir" ${position.isDir ? 'checked' : ''}>
+      Director slot
+    </label>
+    <button type="button" class="danger-btn" onclick="this.closest('.position-row').remove()">Delete</button>
+  `;
+  return row;
+}
+
+function renderPositionRows(containerId, positions) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  (positions || []).forEach(position => container.appendChild(makePositionRow(position)));
+}
+
+function addPositionRow(containerId, position = { label: '', pattern: '', isDir: false }) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.appendChild(makePositionRow(position));
+}
+
+function resetPositionRows(containerId) {
+  renderPositionRows(containerId, getDefaultVideoPositions());
+}
+
+function readPositionRows(containerId) {
+  return [...document.querySelectorAll(`#${containerId} .position-row`)].map(row => ({
+    label: row.querySelector('.position-label').value.trim(),
+    pattern: row.querySelector('.position-pattern').value.trim(),
+    isDir: row.querySelector('.position-is-dir').checked,
+  })).filter(position => position.label && position.pattern);
+}
+
+function readCommaList(value) {
+  return String(value || '')
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean);
+}
+
+function setStatus(id, message = '', type = '') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = message;
+  el.className = `status-line${type ? ` is-${type}` : ''}`;
+}
+
+function applySettings(cfg) {
+  CFG.SERVICE_TYPE_ID = cfg.serviceTypeId || '';
+  CFG.SERVICE_TYPE_NAME = cfg.serviceTypeName || '';
+  CFG.VIDEO_TEAM_NAME = String(cfg.videoTeamName || 'video production').trim().toLowerCase();
+  CFG.BAND_TEAM_NAMES = [...(cfg.bandTeamNames || ['band', 'vocal'])].map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+  CFG.DIRECTOR_KEYWORDS = [...(cfg.directorKeywords || ['director', 'td', 'tech dir', 'broadcast'])].map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+  CFG.POLL_INTERVAL_MS = Number(cfg.pollIntervalMs ?? 60000);
+  CFG.TIMEZONE = cfg.timezone || 'America/New_York';
+  CFG.ORG_NAME = cfg.orgName || 'My Church';
+  CFG.ORG_SUB = cfg.orgSub || 'Sunday Services';
+  CFG.ORG_ICON = cfg.orgIcon || '⛪';
+
+  VIDEO_POSITIONS.length = 0;
+  (cfg.videoPositions || getDefaultVideoPositions()).forEach(position => {
+    VIDEO_POSITIONS.push({
+      label: position.label,
+      re: new RegExp(position.pattern, 'i'),
+      isDir: !!position.isDir,
+      pattern: position.pattern,
+    });
+  });
+
+  document.querySelector('.church-name').textContent = CFG.ORG_NAME;
+  document.querySelector('.church-sub').textContent = CFG.ORG_SUB;
+  document.querySelector('.church-icon').textContent = CFG.ORG_ICON;
+  document.title = `Service Dashboard — ${CFG.ORG_NAME}`;
+}
+
+function resetRuntimeState({ clearServiceType = false } = {}) {
+  if (S.countdownTimer) clearInterval(S.countdownTimer);
+  S.countdownTimer = null;
+  stopPolling();
+  if (clearServiceType) S.serviceTypeId = null;
+  S.plans = [];
+  S.currentPlanId = null;
+  S.serviceTimes = [];
+  S.timeChipEls = [];
+  S.songTitles = {};
+  S.changedSongs.clear();
+  document.getElementById('plan-selector').innerHTML = '<option>Loading plans…</option>';
+  document.getElementById('cameras-section').innerHTML = '';
+  document.getElementById('times-row').innerHTML = '';
+  document.getElementById('service-title').textContent = 'Loading…';
+  document.getElementById('service-date').textContent = '—';
+  document.getElementById('speaker-row').style.display = 'none';
+}
+
+async function showSetupWizard(cfg) {
+  document.getElementById('setup-overlay').classList.add('is-open');
+  const appIdInput = document.getElementById('setup-pco-app-id');
+  const secretInput = document.getElementById('setup-pco-secret');
+  appIdInput.value = cfg.pcoAppId || '';
+  secretInput.value = '';
+  appIdInput.disabled = !!cfg.envLocked;
+  secretInput.disabled = !!cfg.envLocked;
+  document.getElementById('setup-org-name').value = cfg.orgName || 'My Church';
+  document.getElementById('setup-org-sub').value = cfg.orgSub || 'Sunday Services';
+  document.getElementById('setup-org-icon').value = cfg.orgIcon || '⛪';
+  document.getElementById('setup-video-team-name').value = cfg.videoTeamName || 'video production';
+  document.getElementById('setup-band-team-names').value = (cfg.bandTeamNames || []).join(', ');
+  document.getElementById('setup-director-keywords').value = (cfg.directorKeywords || []).join(', ');
+  populateTimezoneSelect('setup-timezone', cfg.timezone || 'America/New_York');
+  renderPositionRows('setup-positions-list', cfg.videoPositions || getDefaultVideoPositions());
+  setStatus('setup-credentials-status', cfg.envLocked ? 'Credentials are provided by the environment for this build.' : '');
+  setStatus('setup-save-status');
+  if (cfg.hasSecret) {
+    const serviceTypes = await get('/api/service-types').catch(() => null);
+    if (serviceTypes) populateServiceTypeSelect('setup-service-type', serviceTypes, cfg.serviceTypeId);
+    goToSetupStep(cfg.serviceTypeId ? 4 : 3);
+  } else {
+    goToSetupStep(1);
+  }
+}
+
+function hideSetupWizard() {
+  document.getElementById('setup-overlay').classList.remove('is-open');
+}
+
+function goToSetupStep(step) {
+  UI.setupStep = step;
+  document.querySelectorAll('.setup-step').forEach(el => {
+    el.classList.toggle('active', Number(el.dataset.step) === step);
+  });
+  document.querySelectorAll('.setup-dot').forEach(el => {
+    el.classList.toggle('active', Number(el.dataset.dot) === step);
+  });
+}
+
+async function setupTestCredentials() {
+  if (document.getElementById('setup-pco-app-id').disabled) {
+    setStatus('setup-credentials-status', 'Credentials are already provided by the environment for this build.');
+    goToSetupStep(3);
+    return;
+  }
+  setStatus('setup-credentials-status', 'Testing connection…');
+  try {
+    const result = await postJson('/api/settings/test-credentials', {
+      appId: document.getElementById('setup-pco-app-id').value.trim(),
+      secret: document.getElementById('setup-pco-secret').value.trim(),
+    });
+    populateServiceTypeSelect('setup-service-type', result.serviceTypes, UI.latestSettings?.serviceTypeId);
+    setStatus('setup-credentials-status', 'Connection successful. Service types loaded.', 'ok');
+    goToSetupStep(3);
+  } catch (error) {
+    setStatus('setup-credentials-status', error.message, 'error');
+  }
+}
+
+function readSetupPayload() {
+  const serviceTypeSelect = document.getElementById('setup-service-type');
+  const selectedOption = serviceTypeSelect.options[serviceTypeSelect.selectedIndex];
+  return {
+    pcoAppId: document.getElementById('setup-pco-app-id').value.trim(),
+    pcoSecret: document.getElementById('setup-pco-secret').value.trim(),
+    serviceTypeId: serviceTypeSelect.value,
+    serviceTypeName: selectedOption ? selectedOption.textContent : '',
+    orgName: document.getElementById('setup-org-name').value.trim(),
+    orgSub: document.getElementById('setup-org-sub').value.trim(),
+    orgIcon: document.getElementById('setup-org-icon').value.trim(),
+    timezone: document.getElementById('setup-timezone').value,
+    videoTeamName: document.getElementById('setup-video-team-name').value.trim(),
+    bandTeamNames: readCommaList(document.getElementById('setup-band-team-names').value),
+    directorKeywords: readCommaList(document.getElementById('setup-director-keywords').value),
+    videoPositions: readPositionRows('setup-positions-list'),
+  };
+}
+
+async function setupSave() {
+  setStatus('setup-save-status', 'Saving settings…');
+  try {
+    const result = await postJson('/api/settings', readSetupPayload());
+    const cfg = result.settings;
+    UI.latestSettings = cfg;
+    applySettings(cfg);
+    hideSetupWizard();
+    resetRuntimeState();
+    await startDashboard();
+  } catch (error) {
+    setStatus('setup-save-status', error.message, 'error');
+  }
+}
+
+async function openSettings() {
+  try {
+    const cfg = await get('/api/settings');
+    UI.latestSettings = cfg;
+    document.getElementById('settings-overlay').classList.add('is-open');
+    document.getElementById('settings-pco-app-id').value = cfg.pcoAppId || '';
+    document.getElementById('settings-pco-secret').value = '';
+    document.getElementById('settings-org-name').value = cfg.orgName || '';
+    document.getElementById('settings-org-sub').value = cfg.orgSub || '';
+    document.getElementById('settings-org-icon').value = cfg.orgIcon || '';
+    document.getElementById('settings-video-team-name').value = cfg.videoTeamName || '';
+    document.getElementById('settings-band-team-names').value = (cfg.bandTeamNames || []).join(', ');
+    document.getElementById('settings-director-keywords').value = (cfg.directorKeywords || []).join(', ');
+    document.getElementById('settings-poll-interval').value = String(cfg.pollIntervalMs ?? 60000);
+    populateTimezoneSelect('settings-timezone', cfg.timezone || 'America/New_York');
+    renderPositionRows('settings-positions-list', cfg.videoPositions || getDefaultVideoPositions());
+
+    const appIdInput = document.getElementById('settings-pco-app-id');
+    const secretInput = document.getElementById('settings-pco-secret');
+    appIdInput.disabled = !!cfg.envLocked;
+    secretInput.disabled = !!cfg.envLocked;
+    if (cfg.envLocked) {
+      appIdInput.placeholder = 'Set by environment';
+      secretInput.placeholder = 'Set by environment';
+    }
+
+    const serviceTypes = await get('/api/service-types').catch(() => null);
+    populateServiceTypeSelect('settings-service-type', serviceTypes || { data: [] }, cfg.serviceTypeId);
+    setStatus('settings-credentials-status', cfg.envLocked ? 'Credentials are managed by environment variables for this build.' : '');
+    setStatus('settings-save-status');
+  } catch (error) {
+    console.error(error);
+    showSongsState('error', error.message);
+  }
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('is-open');
+}
+
+async function settingsTestCredentials() {
+  if (UI.latestSettings?.envLocked) {
+    setStatus('settings-credentials-status', 'Credentials are managed by environment variables for this build.');
+    return;
+  }
+  setStatus('settings-credentials-status', 'Testing connection…');
+  try {
+    const appId = document.getElementById('settings-pco-app-id').value.trim();
+    const secret = document.getElementById('settings-pco-secret').value.trim();
+    if (!appId || !secret) {
+      throw new Error('Enter both an App ID and Secret to test new credentials.');
+    }
+    const payload = {
+      appId,
+      secret,
+    };
+    const result = await postJson('/api/settings/test-credentials', payload);
+    populateServiceTypeSelect('settings-service-type', result.serviceTypes, document.getElementById('settings-service-type').value);
+    setStatus('settings-credentials-status', 'Connection successful. Service types refreshed.', 'ok');
+  } catch (error) {
+    setStatus('settings-credentials-status', error.message, 'error');
+  }
+}
+
+function readSettingsPayload() {
+  const select = document.getElementById('settings-service-type');
+  const selectedOption = select.options[select.selectedIndex];
+  const payload = {
+    serviceTypeId: select.value,
+    serviceTypeName: selectedOption ? selectedOption.textContent : '',
+    orgName: document.getElementById('settings-org-name').value.trim(),
+    orgSub: document.getElementById('settings-org-sub').value.trim(),
+    orgIcon: document.getElementById('settings-org-icon').value.trim(),
+    timezone: document.getElementById('settings-timezone').value,
+    pollIntervalMs: Number(document.getElementById('settings-poll-interval').value),
+    videoTeamName: document.getElementById('settings-video-team-name').value.trim(),
+    bandTeamNames: readCommaList(document.getElementById('settings-band-team-names').value),
+    directorKeywords: readCommaList(document.getElementById('settings-director-keywords').value),
+    videoPositions: readPositionRows('settings-positions-list'),
+  };
+
+  const appId = document.getElementById('settings-pco-app-id').value.trim();
+  const secret = document.getElementById('settings-pco-secret').value.trim();
+  if (!document.getElementById('settings-pco-app-id').disabled) payload.pcoAppId = appId;
+  if (secret) payload.pcoSecret = secret;
+  return payload;
+}
+
+async function saveSettings() {
+  setStatus('settings-save-status', 'Saving settings…');
+  try {
+    const previousServiceTypeId = UI.latestSettings?.serviceTypeId || '';
+    const result = await postJson('/api/settings', readSettingsPayload());
+    const cfg = result.settings;
+    UI.latestSettings = cfg;
+    applySettings(cfg);
+    closeSettings();
+    if (cfg.setupRequired) {
+      await showSetupWizard(cfg);
+      return;
+    }
+    resetRuntimeState({ clearServiceType: previousServiceTypeId !== cfg.serviceTypeId });
+    await startDashboard();
+  } catch (error) {
+    setStatus('settings-save-status', error.message, 'error');
+  }
+}
+
+async function resetAllSettings() {
+  const confirmed = window.confirm('Reset all saved settings and reopen the setup wizard?');
+  if (!confirmed) return;
+  try {
+    const result = await postJson('/api/settings/reset', {});
+    const cfg = result.settings;
+    UI.latestSettings = cfg;
+    closeSettings();
+    resetRuntimeState({ clearServiceType: true });
+    applySettings(cfg);
+    await showSetupWizard(cfg);
+  } catch (error) {
+    setStatus('settings-save-status', error.message, 'error');
+  }
+}
+
+async function startDashboard() {
+  showSongsState('loading', 'Connecting to Planning Center…');
+  S.serviceTypeId = CFG.SERVICE_TYPE_ID || null;
+  if (!S.serviceTypeId) throw new Error('Choose a service type before launching the dashboard.');
+  await loadPlans();
+}
+
 async function init() {
   try {
-    // Show test mode badge in header controls if ?test param present
-    if (S.testMode && !document.getElementById('test-mode-badge')) {
-      const badge = document.createElement('span');
-      badge.id = 'test-mode-badge';
-      badge.className = 'test-mode-badge';
-      badge.textContent = '🔴 TEST MODE';
-      document.querySelector('.header-controls').appendChild(badge);
+    ensureTestModeBadge();
+    const cfg = await get('/api/settings');
+    UI.latestSettings = cfg;
+    applySettings(cfg);
+    if (cfg.setupRequired) {
+      resetRuntimeState({ clearServiceType: true });
+      await showSetupWizard(cfg);
+      return;
     }
-    showSongsState('loading', 'Connecting to Planning Center…');
-    const stData = await get('/api/service-types');
-    const st = (stData.data || []).find(x => x.attributes.name === CFG.SERVICE_TYPE_NAME);
-    if (!st) {
-      const names = (stData.data || []).map(x => x.attributes.name).join('\n• ');
-      throw new Error(`Service type not found.\nAvailable:\n• ${names}`);
-    }
-    S.serviceTypeId = st.id;
-    await loadPlans();
+    hideSetupWizard();
+    await startDashboard();
   } catch (e) {
     console.error(e);
     showSongsState('error', e.message);
@@ -875,21 +1749,12 @@ function renderSongs(items, allMembers, personMap, planId) {
 
 // ─── Video Team ───────────────────────────────────────────────────────────────
 // Fixed position slots — always rendered regardless of assignments
-const VIDEO_POSITIONS = [
-  { label: 'DIRECTOR',      re: /main\s*director/i,      isDir: true  },
-  { label: 'BROADCAST DIR', re: /broadcast\s*director/i, isDir: true  },
-  { label: 'CAM 1',         re: /camera\s*0?1\b/i  },
-  { label: 'CAM 2',         re: /camera\s*0?2\b/i  },
-  { label: 'CAM 3',         re: /camera\s*0?3\b/i  },
-  { label: 'CAM 4',         re: /camera\s*0?4\b/i  },
-  { label: 'CAM 5',         re: /camera\s*0?5\b/i  },
-  { label: 'CAM 6',         re: /camera\s*0?6\b/i  },
-  { label: 'CAM 7',         re: /camera\s*0?7\b/i  },
-  { label: 'CAM 8',         re: /camera\s*0?8\b/i  },
-  { label: 'CAM 9',         re: /camera\s*0?9\b/i  },
-  { label: 'CAM 10',        re: /camera\s*10\b/i   },
-  { label: 'CAM 11/12',     re: /camera\s*1[12]\b|ptz/i },
-];
+let VIDEO_POSITIONS = getDefaultVideoPositions().map(position => ({
+  label: position.label,
+  re: new RegExp(position.pattern, 'i'),
+  isDir: !!position.isDir,
+  pattern: position.pattern,
+}));
 
 function renderVideoTeam(allMembers, personMap) {
   const section = document.getElementById('cameras-section');
@@ -1118,7 +1983,7 @@ function updateCountdowns() {
 
 // ─── Background Polling ───────────────────────────────────────────────────────
 function startPolling() {
-  if (S.pollTimer) return; // already running
+  if (S.pollTimer || !CFG.POLL_INTERVAL_MS) return; // already running / polling disabled
   S.pollTimer = setInterval(async () => {
     if (!S.currentPlanId || !S.serviceTypeId) return;
     try {
@@ -1126,7 +1991,7 @@ function startPolling() {
       detectSongChanges(d.items);
       renderAll(d, S.currentPlanId);
     } catch (e) { console.warn('[poll]', e.message); }
-  }, 60_000);
+  }, CFG.POLL_INTERVAL_MS || 60_000);
   console.log('[poll] started');
 }
 
@@ -1188,6 +2053,19 @@ async function get(url) {
   return r.json();
 }
 
+async function postJson(url, payload) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload || {}),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok || data.ok === false) {
+    throw new Error(data.error || `HTTP ${r.status}`);
+  }
+  return data;
+}
+
 function buildMap(arr, type) {
   const m = {};
   arr.forEach(i => { if (i.type === type) m[i.id] = i; });
@@ -1210,7 +2088,7 @@ function fmtDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-    timeZone: 'America/New_York'
+    timeZone: CFG.TIMEZONE || 'America/New_York'
   });
 }
 
@@ -1218,7 +2096,7 @@ function fmtTime(d) {
   if (!d) return '';
   return new Date(d).toLocaleTimeString('en-US', {
     hour: 'numeric', minute: '2-digit', hour12: true,
-    timeZone: 'America/New_York'
+    timeZone: CFG.TIMEZONE || 'America/New_York'
   });
 }
 
@@ -1233,8 +2111,8 @@ async function refresh() {
   const btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
   try {
-    if (S.currentPlanId) await selectPlan(S.currentPlanId);
-    else await loadPlans();
+    resetRuntimeState();
+    await startDashboard();
   } finally {
     btn.classList.remove('spinning');
   }

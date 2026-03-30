@@ -1,54 +1,70 @@
 # PCO Service Dashboard
 
-A fullscreen, TV-ready service overview dashboard for church production teams. Pulls live data from [Planning Center Online](https://www.planningcenter.com/) and displays songs, team assignments, countdowns, and more — designed to be screenshared to a meeting room TV.
+A TV-ready Planning Center dashboard that can run either as an Electron desktop app or as a standalone Node/Express web app. It displays songs, team assignments, countdowns, and production positions for upcoming services.
 
 ---
 
 ## What it does
 
-- **Song cards** — displays each song in the plan with leader photos, key, and description notes; parenthetical subtitles shown separately
-- **Video production team** — hardcoded camera/director slots filled automatically from PCO assignments; shows confirmed, empty, and declined states
-- **Live countdown** — counts down to each service time; switches to a pulsing LIVE indicator once the service starts; greys out past services after 1 hour
-- **Song change alerts** — during a live service, detects if a song title changes in PCO and highlights the card with an animated amber glow until dismissed
-- **Auto-refresh** — polls PCO every 60 seconds while a service is live; manual refresh button available at any time
-- **Director's notes** — per-song textarea saved in browser localStorage
-- **Dark / light mode** — follows system preference; toggle persists across sessions
-- **Test mode** — append `?test` to the URL to enable change detection outside of service hours
+- **Song cards** — displays each song in the plan with leader photos, key, and description notes
+- **Video production team** — configurable camera/director slots filled automatically from PCO assignments
+- **Live countdown** — counts down to each service time and switches to a pulsing LIVE indicator once the service starts
+- **Song change alerts** — highlights updated songs during a live service
+- **Auto-refresh** — configurable polling interval while a service is live
+- **Director's notes** — per-song notes saved in browser `localStorage`
+- **Dark / light mode** — follows system preference and persists across sessions
+- **Test mode** — append `?test` to the URL to enable change detection outside service hours
+- **First-run setup wizard** — configure credentials, service type, org labels, team names, and video positions in-app
+- **Settings panel** — update dashboard config later without editing source files
 
 ---
 
-## Prerequisites
+## Desktop app
 
-- [Node.js](https://nodejs.org/) 18 or later
-- A [Planning Center](https://www.planningcenter.com/) account with Services access
-- A PCO Personal Access Token (PCO → **Account** → **Developer** → **Personal Access Tokens**)
-
----
-
-## Quick start (local)
+The preferred workflow is the Electron desktop app.
 
 ```bash
-# 1. Clone the repo
+# install dependencies
+npm install
+
+# run the desktop app in development
+npm run electron
+
+# build packaged installers
+npm run dist
+```
+
+For a quick unpacked Windows build:
+
+```bash
+npm exec electron-builder -- --dir
+```
+
+The desktop app stores settings in the app's user data folder, not in the repo.
+
+---
+
+## Standalone server mode
+
+Use this mode for Render deployment or for browser-only local development.
+
+```bash
+# 1. clone the repo
 git clone https://github.com/YOUR_USERNAME/pco-dashboard.git
 cd pco-dashboard
 
-# 2. Create your credentials file
+# 2. create your credentials file
 cp .env.example .env
-# Edit .env and fill in PCO_APP_ID and PCO_SECRET
 
-# 3. Install dependencies (first time only)
+# 3. install dependencies
 npm install
 
-# 4. Start the server
+# 4. start the server
 node server.js
 
-# 5. Open in Chrome
-# http://localhost:3000
+# 5. open in a browser
+# http://127.0.0.1:3000
 ```
-
-For a fullscreen TV display, press `F11` (Windows) or `Cmd+Ctrl+F` (Mac) in Chrome.
-
-**Mac quick-start:** right-click `start-mac.sh` → Open With → Terminal. The server starts and Chrome opens automatically.
 
 ---
 
@@ -58,44 +74,44 @@ For a fullscreen TV display, press `F11` (Windows) or `Cmd+Ctrl+F` (Mac) in Chro
 |---|---|---|
 | `PCO_APP_ID` | Yes | Personal Access Token App ID from PCO |
 | `PCO_SECRET` | Yes | Personal Access Token Secret from PCO |
-| `PORT` | No | Port to listen on (default: `3000`; Render sets this automatically) |
+| `PORT` | No | Port to listen on for standalone server mode; default `3000` |
 
-Never commit `.env` to version control — it is listed in `.gitignore`.
+Never commit `.env` to version control.
 
 ---
 
 ## Deploy to Render
 
-Render's free tier is enough for a meeting room display.
+Hosted mode still works.
 
-1. Push the repo to GitHub (private recommended)
-2. Sign in at [render.com](https://render.com) → **New +** → **Web Service**
-3. Connect your GitHub repo
-4. Set the following:
+1. Push the repo to GitHub
+2. Create a new Render Web Service
+3. Set:
    - **Runtime:** Node
    - **Build command:** `npm install`
    - **Start command:** `node server.js`
-5. Add environment variables: `PCO_APP_ID` and `PCO_SECRET`
-6. Click **Deploy**
+4. Add environment variables:
+   - `PCO_APP_ID`
+   - `PCO_SECRET`
 
-The live URL will be something like `https://pco-dashboard.onrender.com`.
-
-> **Note:** The free tier spins down after 15 minutes of inactivity. The first request after a cold start takes 30–60 seconds. Upgrade to the $7/month plan for always-on hosting.
+Note: the new configuration flow is optimized for the desktop app. If Render storage is not persistent, some non-secret dashboard settings may reset after redeploys.
 
 ---
 
 ## Project structure
 
-```
+```text
 pco-dashboard/
-├── server.js          Express server — PCO API proxy, photo proxy, pagination
+├── app-server.js      Shared backend used by both Electron and standalone server mode
+├── electron-main.js   Electron main process / desktop bootstrap
+├── server.js          Standalone web/server entrypoint
 ├── public/
-│   └── index.html     Entire frontend: HTML, CSS, and JS in one file (no build step)
-├── .env               Local credentials (gitignored, never commit)
-├── .env.example       Safe template showing required variable names
-├── .gitignore         Blocks .env and node_modules from GitHub
-├── start-mac.sh       Double-click launcher for Mac
-└── SETUP.txt          Full setup guide for Mac, Windows, and Render
+│   └── index.html     Entire frontend renderer: HTML, CSS, and JS in one file
+├── .env.example       Safe template for local standalone server credentials
+├── .gitignore
+├── package.json
+├── start-mac.sh       Legacy macOS launcher for standalone server mode
+└── SETUP.txt          Supplemental setup notes
 ```
 
 ---
@@ -104,14 +120,12 @@ pco-dashboard/
 
 | Layer | Technology |
 |---|---|
+| Desktop shell | Electron |
 | Server | Node.js + Express |
-| PCO API auth | HTTP Basic Auth (App ID + Secret) |
-| Frontend | Vanilla JS, HTML, CSS — no framework, no build step |
-| Styling | CSS custom properties, `clamp()` for TV-responsive sizing, glassmorphism |
-| Persistence | Browser `localStorage` (theme preference, director's notes) |
-| Deployment | Render (or any Node-compatible host) |
-
-**Dependency note:** `node-fetch` must stay at v2. v3 is ESM-only and breaks `require()`.
+| PCO API auth | HTTP Basic Auth |
+| Frontend | Vanilla JS, HTML, CSS |
+| Persistence | App-managed settings file + browser `localStorage` for renderer-only UI state |
+| Deployment | Electron desktop app, or Render / any Node-compatible host |
 
 ---
 
@@ -119,9 +133,8 @@ pco-dashboard/
 
 | Symptom | Fix |
 |---|---|
-| `node: command not found` | Install Node.js from [nodejs.org](https://nodejs.org) |
-| `Missing PCO credentials` error on start | Copy `.env.example` to `.env` and fill in both values |
-| `Service type not found` in dashboard | Verify the service type name in PCO exactly matches the value in `CFG.SERVICE_TYPE_NAME` inside `index.html` |
-| Photos not loading | Expected on first load; they proxy through the server and cache for 1 hour |
-| `start-mac.sh` won't open | Right-click → Open With → Terminal; allow it in System Settings → Privacy & Security if blocked |
+| Setup wizard keeps appearing in the desktop app | Complete setup and save a service type; desktop settings are stored per-user outside the repo |
+| Hosted app forgets settings | Render may not be persisting local disk; env credentials still work, but app-level settings may reset |
+| Photos not loading | Expected on first load; they proxy through the server and cache for one hour |
+| `start-mac.sh` won't open | It is only for legacy standalone server mode; use the Electron desktop app when possible |
 | Render first load is slow | Free tier cold start — upgrade to paid for always-on |
