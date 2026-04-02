@@ -1,158 +1,78 @@
-# PCO Service Dashboard - Project Context
+# CLAUDE.md
 
-## Current state
-- The project now supports **two run modes**:
-  - **Electron desktop app** for normal end users
-  - **Standalone Node/Express web app** for local browser testing and Render
-- Current working branch on GitHub: `codex/app`
-- `main` is intentionally being kept safer/stabler for the currently live hosted version
-- GitHub release tags created so far:
-  - `v1.0.0` triggered the first release workflow but uploaded far too many assets
-  - `v1.0.1` was created after hardening the workflow
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Most important files
-- [app-server.js](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/app-server.js)
-  Shared backend for both Electron and standalone server mode.
-- [electron-main.js](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/electron-main.js)
-  Electron main process that starts the internal server and opens the app window.
-- [server.js](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/server.js)
-  Standalone web/server entrypoint for Render and browser-only local dev.
-- [public/index.html](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/public/index.html)
-  Entire renderer UI in one HTML file: dashboard, setup wizard, settings modal, CSS, JS.
-- [package.json](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/package.json)
-  Electron scripts and electron-builder config live here.
-- [.github/workflows/release-desktop.yml](C:/Users/wesle/Documents/Claude/Dash/Service%20Overview%20Dashboard/pco-dashboard/.github/workflows/release-desktop.yml)
-  GitHub Actions workflow for Windows/macOS desktop release builds.
+## Commands
 
-## How to run locally
-
-### Electron desktop app
+### Run locally
 ```bash
-npm install
+# Electron desktop app
 npm run electron
-```
 
-### Packaged Windows build
-```bash
-npm exec electron-builder -- --dir
-```
-This creates an unpacked Windows app in `dist/win-unpacked`.
-
-### Full installer build
-```bash
-npm run dist
-```
-
-### Standalone server mode
-```bash
-npm install
+# Standalone web server (then open http://127.0.0.1:3000)
 node server.js
 ```
-Then open `http://127.0.0.1:3000`
 
-## App architecture
-- **Renderer stays single-file** in `public/index.html`
-- **Electron uses localhost fetches** rather than a big IPC rewrite
-- **app-server.js** exposes a reusable `createServer()` factory so Electron can start the backend itself
-- **server.js** still exists for hosted/web mode
+### Build desktop packages
+```bash
+npm run dist          # Windows + macOS installers
+npm run dist:win      # Windows only
+npm run dist:mac      # macOS only
 
-## Settings + setup flow
-- Settings are no longer hardcoded in `index.html`
-- Desktop settings are stored in a per-user settings file outside the repo
-- `GET /api/settings` returns current settings plus:
-  - `hasSecret`
-  - `envLocked`
-  - `setupRequired`
-- `POST /api/settings/test-credentials`
-  - validates PCO credentials
-  - returns service types on success
-- `POST /api/settings`
-  - saves settings
-  - hot-reloads credentials
-- `POST /api/settings/reset`
-  - clears local saved settings
+# Unpacked build (faster, no installer)
+npm exec electron-builder -- --dir
+# Output: dist/win-unpacked/
+```
 
-### Important settings behavior
-- Secret handling uses `hasSecret`; the API does **not** echo raw secrets back
-- Blank secret input in the settings modal means “keep the existing secret”
-- Team-matching values are normalized to lowercase on save and when applied in the renderer
-- Video position regex patterns are validated server-side before save
+### Render / hosted deployment
+- Build: `npm install`
+- Start: `node server.js`
+- Credentials come from env vars (`PCO_APP_ID`, `PCO_SECRET`)
 
-## UI changes already made
-- Added a **first-run setup wizard**
-- Added a **gear/settings modal**
-- Added `applySettings()`
-- Added `resetRuntimeState()` to clear stale timers/state before reloads
-- `serviceTypeId` is now the canonical service selection
-- `fmtDate()` / `fmtTime()` use configurable timezone
-- `startPolling()` uses configurable polling interval
+## Architecture
 
-## Important bug fix already made
-- The “all cameras show unassigned” regression was fixed by normalizing:
-  - `videoTeamName`
-  - `bandTeamNames`
-  - `directorKeywords`
-- If this issue appears again, first inspect saved settings values and confirm they match actual PCO team names / position names.
+Two run modes share the same backend:
+- **Electron desktop**: `electron-main.js` starts `app-server.js` internally, opens a BrowserWindow pointed at `localhost`
+- **Web/server mode**: `server.js` starts `app-server.js` and listens on `PORT` (default 3000)
 
-## Planning Center specifics
-- Auth is Basic Auth with `PCO_APP_ID` + `PCO_SECRET`
-- `team_members` still requires pagination via `pcoAll()`
-- Team name resolution still uses `include=person,team` + relationship lookup
-- Photo URLs must still be proxied through `/api/photo-proxy`
+`app-server.js` exports a `createServer()` factory used by both entry points. All PCO API calls, settings management, and photo proxying live here.
 
-## Electron packaging notes
-- `electron-builder` is configured in `package.json`
-- `signAndEditExecutable` is disabled for Windows because that avoided a local packaging failure in this environment
-- A Windows unpacked build was successfully created locally in `dist/win-unpacked`
-- We did **not** fully validate a macOS package locally because we are working from Windows
+`public/index.html` is the **entire frontend** — dashboard, setup wizard, settings modal, CSS, and JS all in one file. Keep it single-file.
 
-## GitHub Releases / Actions
-- Goal: non-technical users download desktop builds from **GitHub Releases**, not from repo files
-- Workflow file: `.github/workflows/release-desktop.yml`
-- It builds:
-  - Windows
-  - macOS
-- It was updated to:
-  - opt into Node 24 for action runtime
-  - use `gh release create` / `gh release upload` instead of the earlier action-based upload step
+## Key files
+- `app-server.js` — shared Express backend (API routes, PCO proxy, settings)
+- `electron-main.js` — Electron main process
+- `server.js` — standalone web entrypoint
+- `public/index.html` — all UI
+- `.github/workflows/release-desktop.yml` — GitHub Actions desktop release (Windows + macOS)
 
-### Known release issue
-- The first release flow uploaded **way too many assets** because the artifact/release upload patterns are too broad (`dist/*` / release-assets globs)
-- This likely still needs cleanup so Releases only show user-facing files like:
-  - `.exe`
-  - `.dmg`
-  - maybe update metadata if auto-update is ever added
-- Next cleanup task: narrow uploaded artifacts/assets so users don’t see 100+ files
+## Settings API
+- `GET /api/settings` — returns settings + `hasSecret`, `envLocked`, `setupRequired`
+- `POST /api/settings` — saves settings, hot-reloads credentials
+- `POST /api/settings/test-credentials` — validates PCO creds, returns service types
+- `POST /api/settings/reset` — clears saved settings
 
-## Render / hosted mode caveat
-- Hosted mode still works via `node server.js`
-- Render should continue using:
-  - Build: `npm install`
-  - Start: `node server.js`
-- Credentials from Render env vars still work
-- **Important caveat**:
-  non-secret app settings are now file-backed, and hosted storage may not persist across redeploys/restarts
-- If hosted behavior matters long-term, consider adding env-based config for the critical hosted settings such as `serviceTypeId`
+### Settings behavior
+- Secret is never echoed back; API only returns `hasSecret: true/false`
+- Blank secret in settings modal = keep existing secret
+- `videoTeamName`, `bandTeamNames`, `directorKeywords` are normalized to lowercase on save — if team-matching breaks, check that saved values match actual PCO team/position names
+- `videoPositions` patterns are validated as regex server-side before save
+- Desktop settings stored in a per-user file outside the repo (`settings.json` at the app's user data path)
+- Hosted/Render settings are file-backed and **do not persist across redeploys** — consider env-based config for `serviceTypeId` if that matters
 
-## Repo cleanup already done
-- README rewritten to reflect Electron + server dual mode
-- `SETUP.txt` rewritten with concise modern instructions
-- `start-mac.sh` relabeled as legacy standalone-server launcher
-- `.gitignore` now excludes:
-  - `.env`
-  - `node_modules`
-  - `.claude/`
-  - `settings.json`
-  - `dist/`
+## Planning Center API
+- Auth: HTTP Basic with `PCO_APP_ID` + `PCO_SECRET`
+- Base URL: `https://api.planningcenteronline.com`
+- `per_page` capped at 100 by PCO — use `pcoAll()` for paginated endpoints (e.g. `team_members`)
+- Team name resolution uses `include=person,team` + relationship lookup
+- Photo URLs must be proxied through `/api/photo-proxy` (direct PCO photo URLs don't work from browsers)
 
-## Known next good tasks
-1. Clean up GitHub Release asset upload patterns so Releases only show final downloadable installers
-2. Decide whether hosted/Render mode should get more env-config support for non-secret settings
-3. Optionally add a proper Windows installer polish pass and app icon/signing work
-4. If desired, merge `codex/app` into `main` only after desktop and hosted behavior are both validated
+## Constraints
+- Keep `node-fetch` on v2 — v3 is ESM-only and breaks CommonJS
+- Keep `public/index.html` single-file
+- Don't break the Render-hosted path when changing desktop behavior
+- `signAndEditExecutable: false` for Windows builds (local packaging requirement)
+- Branch `main` = live hosted version (stable); active development was on `codex/app`
 
-## Constraints / preferences
-- Keep the single-file frontend unless there is a strong reason to split it
-- Keep `node-fetch` on v2 for CommonJS compatibility
-- Prefer not to break the Render-hosted path while improving the desktop app
-- The user wants to be able to continue in Claude tomorrow with this context intact
+## GitHub Releases
+Workflow `.github/workflows/release-desktop.yml` builds Windows (NSIS) and macOS (DMG) on tag push. The release asset upload patterns have previously been too broad — only upload `.exe` and `.dmg` files for user-facing releases.

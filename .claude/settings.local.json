@@ -3,7 +3,10 @@
     "allow": [
       "Bash(dir)",
       "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\wesle\\\\Documents\\\\Claude\\\\Dash\\\\Service Overview Dashboard\\\\pco-dashboard\\\\.claude\")",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git -C \"C:/Users/wesle/Documents/Claude/Dash/Service Overview Dashboard/pco-dashboard\" diff HEAD -- app-server.js)",
+      "Bash(git -C \"C:/Users/wesle/Documents/Claude/Dash/Service Overview Dashboard/pco-dashboard\" status)",
+      "Bash(git -C \"/c/Users/wesle/Documents/Claude/Dash/Service Overview Dashboard/pco-dashboard\" status)"
     ]
   }
 }

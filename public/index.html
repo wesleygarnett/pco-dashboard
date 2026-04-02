@@ -758,7 +758,51 @@
       letter-spacing: 0.12em;
       color: var(--cyan);
       margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
+    .help-btn {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid var(--cyan);
+      background: transparent;
+      color: var(--cyan);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .help-btn:hover { background: var(--cyan); color: var(--bg); }
+    .help-btn .help-tooltip {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 240px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text);
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.5;
+      z-index: 200;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      white-space: normal;
+    }
+    .help-btn:hover .help-tooltip { display: block; }
 
     @media (max-width: 900px) {
       .step-grid { grid-template-columns: 1fr; }
@@ -905,7 +949,7 @@
               <select id="setup-timezone"></select>
             </div>
             <div class="field">
-              <label for="setup-video-team-name">Video Team Name</label>
+              <label for="setup-video-team-name">Production Team Name</label>
               <input id="setup-video-team-name" type="text">
             </div>
             <div class="field">
@@ -913,7 +957,7 @@
               <input id="setup-band-team-names" type="text">
             </div>
             <div class="field full-span">
-              <label for="setup-director-keywords">Director Keywords</label>
+              <label for="setup-director-keywords">Highlighted Member Keywords</label>
               <input id="setup-director-keywords" type="text">
             </div>
           </div>
@@ -928,8 +972,8 @@
 
       <div class="setup-step" data-step="5">
         <div class="step-card">
-          <div class="panel-title" style="font-size:clamp(18px,2vh,24px)">Video Positions</div>
-          <div class="field-hint">These patterns control how Planning Center position names map onto your camera and director slots.</div>
+          <div class="panel-title" style="font-size:clamp(18px,2vh,24px)">Team Positions</div>
+          <div class="field-hint">Type each position name exactly as it appears in Planning Center. The app will match it automatically. Mark a slot as "Highlighted" to give it a distinct style (e.g. directors or leads).</div>
           <div class="positions-list" id="setup-positions-list"></div>
           <div class="position-actions">
             <button class="secondary-btn" onclick="addPositionRow('setup-positions-list')">Add Position</button>
@@ -1024,10 +1068,10 @@
       </div>
 
       <div class="step-card">
-        <div class="section-title">Team Matching</div>
+        <div class="section-title">Team Matching<button class="help-btn" type="button">?<span class="help-tooltip">Select the teams you wish to be featured. Make sure what you type matches a team you have in Planning Center.</span></button></div>
         <div class="step-grid">
           <div class="field">
-            <label for="settings-video-team-name">Video Team Name</label>
+            <label for="settings-video-team-name">Production Team Name</label>
             <input id="settings-video-team-name" type="text">
           </div>
           <div class="field">
@@ -1035,14 +1079,14 @@
             <input id="settings-band-team-names" type="text">
           </div>
           <div class="field full-span">
-            <label for="settings-director-keywords">Director Keywords</label>
+            <label for="settings-director-keywords">Highlighted Member Keywords</label>
             <input id="settings-director-keywords" type="text">
           </div>
         </div>
       </div>
 
       <div class="step-card">
-        <div class="section-title">Video Positions</div>
+        <div class="section-title">Team Positions</div>
         <div class="positions-list" id="settings-positions-list"></div>
         <div class="position-actions">
           <button class="secondary-btn" onclick="addPositionRow('settings-positions-list')">Add Position</button>
@@ -1127,19 +1171,19 @@ const UI = {
   latestSettings: null,
   setupStep: 1,
   defaultVideoPositions: [
-    { label: 'DIRECTOR', pattern: 'main\\s*director', isDir: true },
-    { label: 'BROADCAST DIR', pattern: 'broadcast\\s*director', isDir: true },
-    { label: 'CAM 1', pattern: 'camera\\s*0?1\\b', isDir: false },
-    { label: 'CAM 2', pattern: 'camera\\s*0?2\\b', isDir: false },
-    { label: 'CAM 3', pattern: 'camera\\s*0?3\\b', isDir: false },
-    { label: 'CAM 4', pattern: 'camera\\s*0?4\\b', isDir: false },
-    { label: 'CAM 5', pattern: 'camera\\s*0?5\\b', isDir: false },
-    { label: 'CAM 6', pattern: 'camera\\s*0?6\\b', isDir: false },
-    { label: 'CAM 7', pattern: 'camera\\s*0?7\\b', isDir: false },
-    { label: 'CAM 8', pattern: 'camera\\s*0?8\\b', isDir: false },
-    { label: 'CAM 9', pattern: 'camera\\s*0?9\\b', isDir: false },
-    { label: 'CAM 10', pattern: 'camera\\s*10\\b', isDir: false },
-    { label: 'CAM 11/12', pattern: 'camera\\s*1[12]\\b|ptz', isDir: false },
+    { label: 'Main Director', pattern: 'main\\s*director', isDir: true },
+    { label: 'Broadcast Director', pattern: 'broadcast\\s*director', isDir: true },
+    { label: 'Camera 1', pattern: 'camera\\s*0?1\\b', isDir: false },
+    { label: 'Camera 2', pattern: 'camera\\s*0?2\\b', isDir: false },
+    { label: 'Camera 3', pattern: 'camera\\s*0?3\\b', isDir: false },
+    { label: 'Camera 4', pattern: 'camera\\s*0?4\\b', isDir: false },
+    { label: 'Camera 5', pattern: 'camera\\s*0?5\\b', isDir: false },
+    { label: 'Camera 6', pattern: 'camera\\s*0?6\\b', isDir: false },
+    { label: 'Camera 7', pattern: 'camera\\s*0?7\\b', isDir: false },
+    { label: 'Camera 8', pattern: 'camera\\s*0?8\\b', isDir: false },
+    { label: 'Camera 9', pattern: 'camera\\s*0?9\\b', isDir: false },
+    { label: 'Camera 10', pattern: 'camera\\s*10\\b', isDir: false },
+    { label: 'Camera 11/12', pattern: 'camera\\s*1[12]\\b|ptz', isDir: false },
   ],
 };
 
@@ -1187,15 +1231,30 @@ function populateServiceTypeSelect(selectId, serviceTypes, selectedId) {
   }
 }
 
+// Auto-generate a regex pattern from a plain-text position name.
+// Words are joined with \s* so spacing variations match.
+// Numeric tokens allow an optional leading zero (e.g. "Camera 1" matches "Camera 01").
+// Known abbreviations are expanded (e.g. "Cam 1" also matches "Camera 1").
+const LABEL_ABBREVS = { 'cam': 'cam(?:era)?' };
+function patternFromLabel(label) {
+  return label.trim().toLowerCase().split(/\s+/).map(word => {
+    if (/^\d+$/.test(word)) return '0?' + word + '\\b';
+    const expanded = LABEL_ABBREVS[word];
+    if (expanded) return expanded;
+    return word.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  }).join('\\s*');
+}
+
 function makePositionRow(position = {}) {
   const row = document.createElement('div');
   row.className = 'position-row';
+  row.dataset.originalLabel = position.label || '';
+  row.dataset.originalPattern = position.pattern || '';
   row.innerHTML = `
-    <input type="text" class="position-label" placeholder="Label" value="${esc(position.label || '')}">
-    <input type="text" class="position-pattern" placeholder="Regex pattern" value="${esc(position.pattern || '')}">
+    <input type="text" class="position-label" placeholder="Position name (as it appears in Planning Center)" value="${esc(position.label || '')}">
     <label class="field-hint" style="display:flex;align-items:center;gap:8px;margin:0">
       <input type="checkbox" class="position-is-dir" ${position.isDir ? 'checked' : ''}>
-      Director slot
+      Highlighted
     </label>
     <button type="button" class="danger-btn" onclick="this.closest('.position-row').remove()">Delete</button>
   `;
@@ -1209,7 +1268,7 @@ function renderPositionRows(containerId, positions) {
   (positions || []).forEach(position => container.appendChild(makePositionRow(position)));
 }
 
-function addPositionRow(containerId, position = { label: '', pattern: '', isDir: false }) {
+function addPositionRow(containerId, position = { label: '', isDir: false }) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.appendChild(makePositionRow(position));
@@ -1220,11 +1279,17 @@ function resetPositionRows(containerId) {
 }
 
 function readPositionRows(containerId) {
-  return [...document.querySelectorAll(`#${containerId} .position-row`)].map(row => ({
-    label: row.querySelector('.position-label').value.trim(),
-    pattern: row.querySelector('.position-pattern').value.trim(),
-    isDir: row.querySelector('.position-is-dir').checked,
-  })).filter(position => position.label && position.pattern);
+  return [...document.querySelectorAll(`#${containerId} .position-row`)].map(row => {
+    const label = row.querySelector('.position-label').value.trim();
+    const isDir = row.querySelector('.position-is-dir').checked;
+    const originalLabel = row.dataset.originalLabel || '';
+    const originalPattern = row.dataset.originalPattern || '';
+    // Preserve the stored pattern if the label hasn't changed; otherwise auto-generate.
+    const pattern = (label && label === originalLabel && originalPattern)
+      ? originalPattern
+      : patternFromLabel(label);
+    return { label, pattern, isDir };
+  }).filter(pos => pos.label);
 }
 
 function readCommaList(value) {
@@ -1836,7 +1901,7 @@ function renderVideoTeam(allMembers, personMap) {
 
     const label = document.createElement('div');
     label.className = 'cam-label';
-    label.textContent = pos.label;
+    label.textContent = pos.label.toUpperCase();
 
     const box = document.createElement('div');
     box.className = 'cam-box';
