@@ -2,6 +2,8 @@
 
 A TV-ready Planning Center dashboard that can run either as an Electron desktop app or as a standalone Node/Express web app. It displays songs, team assignments, countdowns, and production positions for upcoming services.
 
+https://github.com/fliboys/pco-dashboard/releases/tag/v1.0.0
+
 ---
 
 ## What it does
