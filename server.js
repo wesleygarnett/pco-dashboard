@@ -2,6 +2,7 @@ const path = require('path');
 const { createServer } = require('./app-server');
 
 const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 async function main() {
   const server = createServer({
@@ -9,14 +10,12 @@ async function main() {
     staticDir: path.join(__dirname, 'public'),
   });
 
-  const info = await server.start({ port: PORT, host: '127.0.0.1' });
-  console.log('\n╔══════════════════════════════════════════════════╗');
-  console.log('║         PCO Service Dashboard  ✦  v1.0          ║');
-  console.log('╠══════════════════════════════════════════════════╣');
-  console.log(`║   Open in browser: http://127.0.0.1:${info.port}        ║`);
-  console.log('║   Press F11 for fullscreen before screensharing  ║');
-  console.log('║   Press Ctrl+C to stop the server                ║');
-  console.log('╚══════════════════════════════════════════════════╝\n');
+  const info = await server.start({ port: PORT, host: HOST });
+  const browserHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
+
+  console.log('\nPCO Service Dashboard v1.0');
+  console.log(`Listening on ${info.host}:${info.port}`);
+  console.log(`Open in browser: http://${browserHost}:${info.port}\n`);
 }
 
 main().catch(error => {

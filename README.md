@@ -84,6 +84,8 @@ node server.js
 # http://127.0.0.1:3000
 ```
 
+`server.js` binds to `0.0.0.0` by default so the standalone app works on Render and similar hosted Node platforms. For local development, open `http://127.0.0.1:3000` in your browser.
+
 ---
 
 ## Environment variables
@@ -93,6 +95,7 @@ node server.js
 | `PCO_APP_ID` | Yes | Personal Access Token App ID from PCO |
 | `PCO_SECRET` | Yes | Personal Access Token Secret from PCO |
 | `PORT` | No | Port to listen on for standalone server mode; default `3000` |
+| `HOST` | No | Host/interface for standalone server mode; default `0.0.0.0` |
 
 Never commit `.env` to version control.
 
@@ -111,6 +114,8 @@ Hosted mode still works.
 4. Add environment variables:
    - `PCO_APP_ID`
    - `PCO_SECRET`
+
+Render provides `PORT` automatically, and the app now listens on `0.0.0.0` by default, so no extra port-binding setup is needed.
 
 Note: the new configuration flow is optimized for the desktop app. If Render storage is not persistent, some non-secret dashboard settings may reset after redeploys.
 
@@ -153,6 +158,7 @@ pco-dashboard/
 |---|---|
 | Setup wizard keeps appearing in the desktop app | Complete setup and save a service type; desktop settings are stored per-user outside the repo |
 | Hosted app forgets settings | Render may not be persisting local disk; env credentials still work, but app-level settings may reset |
+| Render says no open ports were detected | Make sure the service starts with `node server.js`; the standalone server should bind to `0.0.0.0` and use Render's `PORT` automatically |
 | Photos not loading | Expected on first load; they proxy through the server and cache for one hour |
 | `start-mac.sh` won't open | It is only for legacy standalone server mode; use the Electron desktop app when possible |
 | Render first load is slow | Free tier cold start — upgrade to paid for always-on |
