@@ -6,7 +6,11 @@
       "mcp__Claude_Preview__preview_start",
       "Bash(git -C \"C:/Users/wesle/Documents/Claude/Dash/Service Overview Dashboard/pco-dashboard\" diff HEAD -- app-server.js)",
       "Bash(git -C \"C:/Users/wesle/Documents/Claude/Dash/Service Overview Dashboard/pco-dashboard\" status)",
-      "Bash(git -C \"/c/Users/wesle/Documents/Claude/Dash/Service Overview Dashboard/pco-dashboard\" status)"
+      "Bash(git -C \"/c/Users/wesle/Documents/Claude/Dash/Service Overview Dashboard/pco-dashboard\" status)",
+      "Bash(ssh -T git@github.com)",
+      "Read(//Users/wesleygarnett/.ssh/**)",
+      "Bash(ssh-add -l)",
+      "Bash(git remote:*)"
     ]
   }
 }
