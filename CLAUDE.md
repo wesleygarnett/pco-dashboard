@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run electron
 
 # Standalone web server (then open http://127.0.0.1:3000)
-node server.js
+npm start
 ```
 
 ### Build desktop packages
@@ -26,8 +26,9 @@ npm exec electron-builder -- --dir
 
 ### Render / hosted deployment
 - Build: `npm install`
-- Start: `node server.js`
+- Start: `node server.js` (or `npm start`)
 - Credentials come from env vars (`PCO_APP_ID`, `PCO_SECRET`)
+- For local dev, a `.env` file is supported (dotenv is loaded optionally)
 
 ## Architecture
 
@@ -57,6 +58,7 @@ Two run modes share the same backend:
 - Blank secret in settings modal = keep existing secret
 - `videoTeamName`, `bandTeamNames`, `directorKeywords` are normalized to lowercase on save — if team-matching breaks, check that saved values match actual PCO team/position names
 - `videoPositions` patterns are validated as regex server-side before save
+- `pollIntervalMs` is whitelisted to specific values: `0` (off), `30000`, `60000`, `120000`, `300000`
 - Desktop settings stored in a per-user file outside the repo (`settings.json` at the app's user data path)
 - Hosted/Render settings are file-backed and **do not persist across redeploys** — consider env-based config for `serviceTypeId` if that matters
 
