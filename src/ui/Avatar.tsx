@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 
 export interface AvatarProps {
   /** Person's name — used to derive initials shown when no image is available. */
@@ -26,6 +26,7 @@ export default function Avatar({
   style,
 }: AvatarProps) {
   const [imgFailed, setImgFailed] = useState(false);
+  useEffect(() => setImgFailed(false), [src]);
   const initials = (name || '?')
     .split(' ')
     .map((n) => n[0])

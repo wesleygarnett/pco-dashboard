@@ -58,8 +58,8 @@ export function sortVideoTeam(members, directorKeywords) {
   return [...members].sort((a, b) => {
     const ap = (a.attributes.team_position_name || '').toLowerCase();
     const bp = (b.attributes.team_position_name || '').toLowerCase();
-    const aDir = directorKeywords.some((k) => ap.includes(k));
-    const bDir = directorKeywords.some((k) => bp.includes(k));
+    const aDir = directorKeywords.some((k) => ap.includes(k.toLowerCase()));
+    const bDir = directorKeywords.some((k) => bp.includes(k.toLowerCase()));
     if (aDir && !bDir) return -1;
     if (!aDir && bDir) return 1;
     const aPTZ = /ptz/.test(ap);

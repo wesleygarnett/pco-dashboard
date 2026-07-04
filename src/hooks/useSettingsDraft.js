@@ -16,7 +16,11 @@ function draftFromSettings(cfg) {
     bandTeamNamesText: (cfg.bandTeamNames || []).join(', '),
     directorKeywordsText: (cfg.directorKeywords || []).join(', '),
     pollIntervalMs: cfg.pollIntervalMs ?? 60000,
-    videoPositions: (cfg.videoPositions || getDefaultVideoPositions()).map((p) => ({ ...p })),
+    videoPositions: (cfg.videoPositions || getDefaultVideoPositions()).map((p) => ({
+      ...p,
+      _originalLabel: p.label,
+      _originalPattern: p.pattern,
+    })),
   };
 }
 

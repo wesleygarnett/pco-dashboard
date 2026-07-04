@@ -1,5 +1,5 @@
 import { buildMap, resolveTeamName, parseLeaderNames, parseDescriptionBubbles, matchLeaders, getPhoto, sortVideoTeam } from './matching.js';
-import { capFirst, avatarGradient, fmtDate } from './format.js';
+import { capFirst, avatarGradient, fmtDate, getInitials } from './format.js';
 
 const LIVE_WINDOW_MS = 60 * 60 * 1000;
 
@@ -31,7 +31,7 @@ function buildSongs(items, allMembers, personMap, planId, cfg) {
   const songMap = buildMap(items.included || [], 'Song');
 
   const bandMembers = allMembers.filter((m) =>
-    cfg.bandTeamNames.some((k) => m._teamName.toLowerCase().includes(k)),
+    cfg.bandTeamNames.some((k) => m._teamName.toLowerCase().includes(k.toLowerCase())),
   );
 
   const songItems = (items.data || [])
@@ -94,7 +94,7 @@ function buildSongs(items, allMembers, personMap, planId, cfg) {
 }
 
 function buildPositions(allMembers, personMap, cfg) {
-  const allVideoRaw = allMembers.filter((m) => m._teamName.toLowerCase().includes(cfg.videoTeamName));
+  const allVideoRaw = allMembers.filter((m) => m._teamName.toLowerCase().includes(cfg.videoTeamName.toLowerCase()));
 
   return cfg.videoPositions.map((pos) => {
     const re = new RegExp(pos.pattern, 'i');
@@ -108,7 +108,7 @@ function buildPositions(allMembers, personMap, cfg) {
       name: m.attributes.name || 'Unknown',
       photoUrl: getPhoto(m, personMap),
       gradient: avatarGradient(i),
-      initials: (m.attributes.name || '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2),
+      initials: getInitials(m.attributes.name),
     }));
 
     return {

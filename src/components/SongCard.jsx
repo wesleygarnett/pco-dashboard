@@ -17,9 +17,8 @@ export default function SongCard({
   onDismissChanged,
   animationDelay,
 }) {
-  const [dismissed, setDismissed] = useState(false);
   const [noteValue, setNoteValue] = useState(note);
-  const changed = isChanged && !dismissed;
+  const changed = isChanged;
 
   return (
     <div
@@ -34,7 +33,6 @@ export default function SongCard({
       }}
       onClick={() => {
         if (changed) {
-          setDismissed(true);
           onDismissChanged?.();
         }
       }}

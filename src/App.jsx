@@ -47,10 +47,13 @@ export default function App() {
   useEffect(() => {
     if (!(anyLive || TEST_MODE) || !cfg?.pollIntervalMs) return;
     const id = setInterval(async () => {
-      if (!planIdRef.current || !cfgRef.current) return;
+      const planId = planIdRef.current;
+      const settings = cfgRef.current;
+      if (!planId || !settings) return;
       try {
-        const d = await getPlan(cfgRef.current.serviceTypeId, planIdRef.current);
-        applyDashboardData(d, cfgRef.current, planIdRef.current, { isPoll: true });
+        const d = await getPlan(settings.serviceTypeId, planId);
+        if (planIdRef.current !== planId) return; // plan changed while this request was in flight
+        applyDashboardData(d, settings, planId, { isPoll: true });
       } catch (e) {
         console.warn('[poll]', e.message);
       }

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Field, controlClass as inputClass } from '../../ui';
 import { getTimezoneOptions } from '../../lib/positions.js';
 
@@ -34,6 +35,12 @@ export function ServiceTypeField({ draft, setField, serviceTypes }) {
   const rows = (serviceTypes?.data || [])
     .slice()
     .sort((a, b) => (a.attributes?.name || '').localeCompare(b.attributes?.name || ''));
+
+  useEffect(() => {
+    if (rows.length && !rows.some((t) => t.id === draft.serviceTypeId)) {
+      setField('serviceTypeId', rows[0].id);
+    }
+  }, [serviceTypes, draft.serviceTypeId]);
 
   return (
     <Field label="Service Type" fullSpan hint="This becomes the default service the dashboard loads when the app opens.">

@@ -12,7 +12,7 @@ export default function CameraTeam({ positions }) {
         }}
       >
         {positions.map((pos, i) => (
-          <div key={pos.label} className="flex items-center" style={{ gap: 18 }}>
+          <div key={i} className="flex items-center" style={{ gap: 18 }}>
             {i > 0 && <div className="h-9 w-px bg-white/[0.12]" />}
             <CameraSlot {...pos} />
           </div>
