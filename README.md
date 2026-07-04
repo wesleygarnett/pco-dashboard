@@ -91,6 +91,19 @@ For frontend-only hot-reload development, run `npm run dev` (Vite, port 5173) al
 
 ---
 
+## Component library (`src/ui/`)
+
+The dashboard's presentational pieces (`Avatar`, `Button`, `Badge`, `Field`, `StatusLine`, `Overlay`, plus the terracotta design tokens) live in `src/ui/` as a standalone TypeScript library, separate from the data-coupled app components in `src/components/`. The app imports them directly from source; there's also a standalone build for using them outside this app:
+
+```bash
+npm run build:lib
+# Output: dist-ui/ui.js, dist-ui/ui.css, dist-ui/*.d.ts
+```
+
+This build isn't part of the app build or desktop packaging — it exists so the component library can be consumed independently (declared via `package.json` `exports`), including syncing it to a [claude.ai/design](https://claude.ai/design) project (see `.design-sync/`) so new designs can be built with the app's real, on-brand components.
+
+---
+
 ## Environment variables
 
 | Variable | Required | Description |
@@ -132,17 +145,24 @@ pco-dashboard/
 ├── electron-main.js   Electron main process / desktop bootstrap
 ├── server.js          Standalone web/server entrypoint
 ├── index.html         Vite dev/build template (root, not the frontend itself)
-├── vite.config.js     Build outputs to public/, dev-server proxies /api to port 3000
+├── vite.config.js     App build — outputs to public/, dev-server proxies /api to port 3000
+├── vite.lib.config.js Component library build — outputs to dist-ui/ (see src/ui/ below)
+├── tsconfig.json      Covers all of src/ (app .jsx + library .tsx)
 ├── src/
 │   ├── main.jsx           React entry point
 │   ├── App.jsx             Top-level orchestration (data fetching, timers, view routing)
 │   ├── components/         Header, SongList/SongCard, CameraTeam/CameraSlot, SetupWizard,
-│   │                       SettingsModal, ParticleBackground, Loading/Error states
+│   │                       SettingsModal, ParticleBackground, Loading/Error states —
+│   │                       compose the src/ui primitives, own the PCO data/state
+│   ├── ui/                 Standalone presentational component library (TypeScript):
+│   │                       Avatar, Button, Badge, Field, StatusLine, Overlay, theme.css
 │   ├── api/client.js        Thin fetch wrapper around the /api/* routes
 │   ├── lib/                Pure helpers: dashboard data transform, team matching, formatting
 │   ├── hooks/               Shared settings-form state (setup wizard + settings modal)
-│   └── theme.css / index.css   Terracotta theme variables + Tailwind (v4, CSS-first config)
-├── public/            Generated frontend build output (git-ignored — run `npm run build`)
+│   └── index.css            Tailwind entry (v4, CSS-first config) + app-level theme wiring
+├── public/            Generated app build output (git-ignored — run `npm run build`)
+├── dist-ui/           Generated component library build output (git-ignored — run `npm run build:lib`)
+├── .design-sync/      Config + notes for syncing src/ui to a claude.ai/design project
 ├── .env.example       Safe template for local standalone server credentials
 ├── .gitignore
 ├── package.json
@@ -160,6 +180,7 @@ pco-dashboard/
 | Server | Node.js + Express |
 | PCO API auth | HTTP Basic Auth |
 | Frontend | React + Vite, styled with Tailwind CSS |
+| Component library | TypeScript (`src/ui/`), built separately via `npm run build:lib` → `dist-ui/` |
 | Persistence | App-managed settings file + browser `localStorage` for renderer-only UI state |
 | Deployment | Electron desktop app, or Render / any Node-compatible host |
 

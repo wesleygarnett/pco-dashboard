@@ -53,6 +53,12 @@ Two run modes share the same backend:
 - `npm run build:lib` (config: `vite.lib.config.js`) compiles it to `dist-ui/ui.js` + `dist-ui/ui.css` (tokens + Tailwind utilities) + per-component `.d.ts`; declared in `package.json` `exports`. `dist-ui/` is git-ignored. This build is separate from the app build and not part of packaging/deploy.
 - Smart, data-coupled components (`Header`, `SongList`, `CameraTeam`, `SettingsModal`, `SetupWizard`) stay in `src/components/` and compose the `src/ui` primitives.
 
+### Design system sync (`.design-sync/`)
+- `src/ui` is synced to a claude.ai/design project via the `/design-sync` skill so designs there can build with the real terracotta components. Config lives in `.design-sync/config.json` (`shape: "package"`, `buildCmd: "npm run build:lib"`, `cssEntry: "./dist-ui/ui.css"`) — re-running the sync is deterministic from this file.
+- `.design-sync/conventions.md` — prepended to the synced README; teaches the design agent this library's conventions (dark-theme-only, no `ThemeProvider`, Tailwind + `var(--token)` styling idiom). `.design-sync/NOTES.md` — repo-specific gotchas for whoever re-runs the sync (e.g. why `package.json` needs a top-level `types` field, the `Overlay` fixed-position preview quirk).
+- `.design-sync/previews/*.tsx` — hand-authored example compositions for each library component, used to generate preview cards; edit these directly, they're never regenerated.
+- `.ds-sync/` and `ds-bundle/` are regenerated scratch/output from running the sync — git-ignored, not source.
+
 ### Frontend structure (`src/`)
 - `src/main.jsx` — mounts `<App/>`
 - `src/App.jsx` — top-level orchestration: settings/plan fetch, countdown/poll timers, routes between setup wizard / loading / error / dashboard
@@ -60,16 +66,21 @@ Two run modes share the same backend:
 - `src/api/client.js` — thin fetch wrapper around the `/api/*` routes below
 - `src/lib/` — pure helpers: `buildDashboardData.js` (transforms `/api/plan` response into song/position props), `matching.js` (team/leader matching), `format.js`, `positions.js`
 - `src/hooks/useSettingsDraft.js` — shared form state for both the setup wizard and settings modal (same draft/validation/save logic, different step framing)
-- `src/theme.css` — CSS custom properties for the terracotta "Glass Panel" theme; Tailwind (v4, CSS-first config) layers utility classes on top via `src/index.css`
+- `src/ui/theme.css` — CSS custom properties for the terracotta "Glass Panel" theme (moved here from `src/theme.css` when `src/ui/` was extracted); Tailwind (v4, CSS-first config) layers utility classes on top via `src/index.css`
 
 ## Key files
 - `app-server.js` — shared Express backend (API routes, PCO proxy, settings)
 - `electron-main.js` — Electron main process
 - `server.js` — standalone web entrypoint
 - `src/App.jsx` — frontend entry/orchestration (see Architecture above)
-- `vite.config.js` — build output goes to `public/`; dev-server proxies `/api` to port 3000
+- `vite.config.js` — app build; output goes to `public/`, dev-server proxies `/api` to port 3000
+- `vite.lib.config.js` — component library build (see Component library above); output goes to `dist-ui/`
+- `tsconfig.json` — covers all of `src/` (`allowJs: true`) so the TypeScript `src/ui/*.tsx` primitives and the app's `.jsx` files type-check under one config
 - `public/` — generated frontend build output (git-ignored, not source)
+- `dist-ui/` — generated component library build output (git-ignored, not source)
+- `package.json` `exports`/`types` — the library's public contract (`.` → `dist-ui/ui.js` + `dist-ui/lib.d.ts`, `./styles.css` → `dist-ui/ui.css`); `main` (`electron-main.js`) is unrelated and only used when Electron launches the app
 - `.github/workflows/release-desktop.yml` — GitHub Actions desktop release (Windows + macOS)
+- `.design-sync/` — config, notes, and hand-authored preview stories for syncing `src/ui` to a claude.ai/design project (see Design system sync below)
 
 ## Settings API
 - `GET /api/settings` — returns settings + `hasSecret`, `envLocked`, `setupRequired`
