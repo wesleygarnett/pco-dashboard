@@ -1,0 +1,94 @@
+/* Terracotta "Glass Panel" theme — ported from public/index.html's :root block */
+:root {
+  /* ---- primary accent (single warm terracotta family) ---- */
+  --cyan: #e2996f;
+  --cyan-bg: rgba(226, 153, 111, 0.1);
+  --cyan-glow: rgba(226, 153, 111, 0.14);
+  --purple: #e2996f;
+  --purple-bg: rgba(226, 153, 111, 0.12);
+  --purple-glow: rgba(226, 153, 111, 0.16);
+  --amber: #e2996f;
+  --amber-bg: rgba(226, 153, 111, 0.1);
+  --amber-glow: rgba(226, 153, 111, 0.14);
+  --green: #7bb989;
+  --green-bg: rgba(123, 185, 137, 0.15);
+  --bg: #0b0a09;
+  --s1: rgba(255, 255, 255, 0.09);
+  --s2: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.12);
+  --text: #f7f2ea;
+  --muted: rgba(242, 237, 230, 0.5);
+  --dim: rgba(242, 237, 230, 0.3);
+  --plan-option-bg: #17130f;
+  --label-bg: #17130f;
+  --purple-border: rgba(226, 153, 111, 0.35);
+  --purple-border-strong: rgba(226, 153, 111, 0.4);
+  --purple-border-soft: rgba(226, 153, 111, 0.18);
+  --cyan-border: rgba(226, 153, 111, 0.35);
+  --cyan-border-strong: rgba(226, 153, 111, 0.4);
+  --amber-border: rgba(226, 153, 111, 0.35);
+  --amber-border-strong: rgba(226, 153, 111, 0.4);
+  --green-border: rgba(123, 185, 137, 0.4);
+  --avatar-ring: #17130f;
+  --live: #7bb989;
+  --danger: #c75a46;
+  --danger-text: rgba(199, 90, 70, 0.85);
+  --danger-bg: rgba(199, 90, 70, 0.1);
+  --danger-border: rgba(199, 90, 70, 0.35);
+  --note-text: #e2996f;
+  --note-placeholder: rgba(242, 237, 230, 0.3);
+
+  /* ---- avatar gradients ---- */
+  --avatar-grad-1: linear-gradient(150deg, #e2996f, #9a5232);
+  --avatar-grad-2: linear-gradient(150deg, #d8c7ae, #93805f);
+  --avatar-grad-3: linear-gradient(150deg, #b98cae, #6d4c6a);
+  --avatar-grad-empty: rgba(255, 255, 255, 0.05);
+  --avatar-grad-director: linear-gradient(150deg, #e2996f, #9a5232);
+
+  color-scheme: dark;
+}
+
+/* Shared "liquid glass" surface used by the header pill and camera dock */
+.glass-pill {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 999px;
+}
+
+/* Shared glass card surface used by song rows */
+.glass-card {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border);
+  backdrop-filter: blur(20px) saturate(160%);
+  border-radius: 22px;
+}
+
+@keyframes card-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-live {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.glass-card.is-changed {
+  background: linear-gradient(150deg, rgba(217, 119, 87, 0.16), rgba(255, 255, 255, 0.03));
+  border-color: var(--purple-border-strong);
+  box-shadow:
+    0 0 0 1px rgba(217, 119, 87, 0.15),
+    0 20px 50px rgba(217, 119, 87, 0.12);
+}

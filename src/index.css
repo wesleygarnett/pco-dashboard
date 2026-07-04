@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+@import './theme.css';
+
+@theme {
+  --color-terracotta: #e2996f;
+  --color-terracotta-bg: rgba(226, 153, 111, 0.1);
+  --color-terracotta-border: rgba(226, 153, 111, 0.35);
+  --color-live: #7bb989;
+  --color-live-bg: rgba(123, 185, 137, 0.15);
+  --color-danger: #c75a46;
+  --color-danger-bg: rgba(199, 90, 70, 0.1);
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: radial-gradient(120% 140% at 20% -10%, #241d17 0%, #0f0d0b 55%, var(--bg) 100%);
+  color: var(--text);
+  font-family: var(--font-sans);
+  overflow: hidden;
+}

@@ -5,21 +5,29 @@
   "author": "Wesley",
   "main": "electron-main.js",
   "scripts": {
-    "start": "node server.js",
-    "electron": "electron .",
-    "desktop": "electron .",
-    "dist": "electron-builder --win --mac",
-    "dist:win": "electron-builder --win",
-    "dist:mac": "electron-builder --mac"
+    "dev": "vite",
+    "build": "vite build",
+    "start": "npm run build && node server.js",
+    "electron": "npm run build && electron .",
+    "desktop": "npm run build && electron .",
+    "dist": "npm run build && electron-builder --win --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.2",
+    "@vitejs/plugin-react": "^6.0.3",
     "electron": "^36.2.0",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^26.8.1",
+    "tailwindcss": "^4.3.2",
+    "vite": "^8.1.3"
   },
   "build": {
     "appId": "com.wesleypco.dashboard",

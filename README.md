@@ -14,7 +14,6 @@ https://github.com/fliboys/pco-dashboard/releases/tag/v1.0.0
 - **Song change alerts** — highlights updated songs during a live service
 - **Auto-refresh** — configurable polling interval while a service is live
 - **Director's notes** — per-song notes saved in browser `localStorage`
-- **Dark / light mode** — follows system preference and persists across sessions
 - **Test mode** — append `?test` to the URL to enable change detection outside service hours
 - **First-run setup wizard** — configure credentials, service type, org labels, team names, and video positions in-app
 - **Settings panel** — update dashboard config later without editing source files
@@ -36,10 +35,10 @@ npm run electron
 npm run dist
 ```
 
-For a quick unpacked Windows build:
+For a quick unpacked build (skips the installer step):
 
 ```bash
-npm exec electron-builder -- --dir
+npm run build && npx electron-builder --dir
 ```
 
 The desktop app stores settings in the app's user data folder, not in the repo.
@@ -79,12 +78,14 @@ cp .env.example .env
 # 3. install dependencies
 npm install
 
-# 4. start the server
-node server.js
+# 4. start the server (builds the frontend first)
+npm start
 
 # 5. open in a browser
 # http://127.0.0.1:3000
 ```
+
+For frontend-only hot-reload development, run `npm run dev` (Vite, port 5173) alongside `npm start` (Express, port 3000) in a second terminal — Vite proxies `/api` calls to the Express server.
 
 `server.js` binds to `0.0.0.0` by default so the standalone app works on Render and similar hosted Node platforms. For local development, open `http://127.0.0.1:3000` in your browser.
 
@@ -111,7 +112,7 @@ Hosted mode still works.
 2. Create a new Render Web Service
 3. Set:
    - **Runtime:** Node
-   - **Build command:** `npm install`
+   - **Build command:** `npm install && npm run build`
    - **Start command:** `node server.js`
 4. Add environment variables:
    - `PCO_APP_ID`
@@ -130,8 +131,18 @@ pco-dashboard/
 ├── app-server.js      Shared backend used by both Electron and standalone server mode
 ├── electron-main.js   Electron main process / desktop bootstrap
 ├── server.js          Standalone web/server entrypoint
-├── public/
-│   └── index.html     Entire frontend renderer: HTML, CSS, and JS in one file
+├── index.html         Vite dev/build template (root, not the frontend itself)
+├── vite.config.js     Build outputs to public/, dev-server proxies /api to port 3000
+├── src/
+│   ├── main.jsx           React entry point
+│   ├── App.jsx             Top-level orchestration (data fetching, timers, view routing)
+│   ├── components/         Header, SongList/SongCard, CameraTeam/CameraSlot, SetupWizard,
+│   │                       SettingsModal, ParticleBackground, Loading/Error states
+│   ├── api/client.js        Thin fetch wrapper around the /api/* routes
+│   ├── lib/                Pure helpers: dashboard data transform, team matching, formatting
+│   ├── hooks/               Shared settings-form state (setup wizard + settings modal)
+│   └── theme.css / index.css   Terracotta theme variables + Tailwind (v4, CSS-first config)
+├── public/            Generated frontend build output (git-ignored — run `npm run build`)
 ├── .env.example       Safe template for local standalone server credentials
 ├── .gitignore
 ├── package.json
@@ -148,7 +159,7 @@ pco-dashboard/
 | Desktop shell | Electron |
 | Server | Node.js + Express |
 | PCO API auth | HTTP Basic Auth |
-| Frontend | Vanilla JS, HTML, CSS |
+| Frontend | React + Vite, styled with Tailwind CSS |
 | Persistence | App-managed settings file + browser `localStorage` for renderer-only UI state |
 | Deployment | Electron desktop app, or Render / any Node-compatible host |
 
@@ -158,6 +169,7 @@ pco-dashboard/
 
 | Symptom | Fix |
 |---|---|
+| App shows an old/blank UI after pulling changes | Run `npm run build` — `public/` is generated and git-ignored, so a fresh checkout needs a build before `npm start`/`npm run electron` will reflect current code |
 | Setup wizard keeps appearing in the desktop app | Complete setup and save a service type; desktop settings are stored per-user outside the repo |
 | Hosted app forgets settings | Render may not be persisting local disk; env credentials still work, but app-level settings may reset |
 | Render says no open ports were detected | Make sure the service starts with `node server.js`; the standalone server should bind to `0.0.0.0` and use Render's `PORT` automatically |
