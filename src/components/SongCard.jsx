@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import Avatar from './Avatar.jsx';
+import { Avatar, Badge } from '../ui';
+import { photoProxyUrl } from '../lib/format.js';
 
 export default function SongCard({
   index,
@@ -52,7 +53,7 @@ export default function SongCard({
         <div className="flex shrink-0">
           {leaders.map((leader, i) => (
             <div key={i} style={{ marginLeft: i > 0 ? -12 : 0, zIndex: leaders.length - i }}>
-              <Avatar name={leader.name} photoUrl={leader.photoUrl} gradient={leader.gradient} size={46} />
+              <Avatar name={leader.name} src={photoProxyUrl(leader.photoUrl)} gradient={leader.gradient} size={46} />
             </div>
           ))}
         </div>
@@ -60,21 +61,14 @@ export default function SongCard({
 
       <div className="flex min-w-0 flex-wrap items-center gap-1.5 overflow-hidden">
         {leadPills.map((p, i) => (
-          <span
-            key={`lead-${i}`}
-            className="shrink-0 whitespace-nowrap rounded-full border border-[var(--purple-border)] bg-[var(--purple-bg)] px-3 py-1 text-[12px] font-extrabold text-[var(--purple)]"
-          >
+          <Badge key={`lead-${i}`} variant="accent" className="shrink-0">
             {p}
-          </span>
+          </Badge>
         ))}
         {bubbles.map((b, i) => (
-          <span
-            key={`bubble-${i}`}
-            className="max-w-[220px] shrink truncate whitespace-nowrap rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold text-[var(--muted)]"
-            title={b}
-          >
+          <Badge key={`bubble-${i}`} variant="neutral" className="max-w-[220px] shrink truncate" title={b}>
             {b}
-          </span>
+          </Badge>
         ))}
       </div>
 

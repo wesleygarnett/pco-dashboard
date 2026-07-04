@@ -1,0 +1,9 @@
+/* Library stylesheet entry — emitted as dist/ui.css by the library build.
+   Ships the terracotta design tokens plus the Tailwind utilities the UI
+   components use, so consumers get styled components with one CSS import. */
+@import 'tailwindcss';
+
+/* Scan the library components so Tailwind emits only the utilities they use. */
+@source './';
+
+@import './theme.css';

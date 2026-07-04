@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import './theme.css';
+@import './ui/theme.css';
 
 @theme {
   --color-terracotta: #e2996f;

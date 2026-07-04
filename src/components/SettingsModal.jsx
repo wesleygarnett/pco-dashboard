@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import Overlay from './settings/Overlay.jsx';
+import { Overlay, StatusLine, Button } from '../ui';
 import { CredentialsFields, ServiceTypeField, DisplayFields, TeamMatchingFields } from './settings/SettingsFields.jsx';
 import PositionsEditor from './settings/PositionsEditor.jsx';
-import StatusLine from './settings/StatusLine.jsx';
-import { PrimaryButton, SecondaryButton, DangerButton } from './settings/Buttons.jsx';
 import { useSettingsDraft } from '../hooks/useSettingsDraft.js';
 import { saveSettings as apiSaveSettings, resetSettings as apiResetSettings } from '../api/client.js';
 
@@ -77,7 +75,7 @@ export default function SettingsModal({ cfg, onClose, onSaved, onSetupRequired }
         />
         <StatusLine status={form.status} />
         <div className="flex justify-end">
-          <SecondaryButton onClick={form.testConnection}>Test Connection</SecondaryButton>
+          <Button variant="secondary"onClick={form.testConnection}>Test Connection</Button>
         </div>
       </SectionCard>
 
@@ -102,10 +100,10 @@ export default function SettingsModal({ cfg, onClose, onSaved, onSetupRequired }
 
       <StatusLine status={saveStatus} />
       <div className="flex items-center justify-between">
-        <DangerButton onClick={handleResetAll}>Reset All Settings</DangerButton>
+        <Button variant="danger"onClick={handleResetAll}>Reset All Settings</Button>
         <div className="flex gap-2">
-          <SecondaryButton onClick={onClose}>Close</SecondaryButton>
-          <PrimaryButton onClick={handleSave}>Save Settings</PrimaryButton>
+          <Button variant="secondary"onClick={onClose}>Close</Button>
+          <Button variant="primary"onClick={handleSave}>Save Settings</Button>
         </div>
       </div>
     </Overlay>

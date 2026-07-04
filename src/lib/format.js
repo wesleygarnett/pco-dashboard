@@ -30,6 +30,13 @@ export function avatarGradient(index) {
   return AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
 }
 
+// PCO photo URLs don't load cross-origin from a browser, so route them through
+// the app's /api/photo-proxy. Returns undefined for empty input so <Avatar>
+// falls back to initials.
+export function photoProxyUrl(url) {
+  return url ? `/api/photo-proxy?url=${encodeURIComponent(url)}` : undefined;
+}
+
 export function fmtDate(d, timezone) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('en-US', {

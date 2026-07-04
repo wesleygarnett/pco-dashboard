@@ -15,6 +15,9 @@ npm start
 # Frontend-only hot-reload dev server (Vite, port 5173) — proxies /api to
 # a separately-running `node server.js` / `npm start` on port 3000
 npm run dev
+
+# Build the standalone component library (src/ui) → dist-ui/
+npm run build:lib
 ```
 
 ### Build desktop packages
@@ -43,6 +46,12 @@ Two run modes share the same backend:
 `app-server.js` exports a `createServer()` factory used by both entry points. All PCO API calls, settings management, and photo proxying live here.
 
 **Frontend is a Vite + React app.** Source lives in `src/` (components, state, API client, lib helpers — see below). `public/` is a **generated build artifact** (git-ignored) produced by `npm run build` — never hand-edit files in `public/`; edit `src/` and rebuild. Both Electron and the Express static server just serve whatever is currently in `public/`, so a build must run before either will reflect frontend changes.
+
+### Component library (`src/ui/`)
+- **`src/ui/` is a standalone, presentational component library** (TypeScript `.tsx`): `Avatar`, `Button` (`variant` prop), `Badge`, `Field` (+ `controlClass`), `StatusLine`, `Overlay`, plus the terracotta design tokens in `src/ui/theme.css`. Pure, prop-driven, no app/PCO coupling — the app imports these via `import { … } from '../ui'`.
+- `src/ui/index.ts` — CSS-free barrel the app imports (the app owns its own Tailwind entry). `src/ui/lib.ts` — library build entry that also pulls `ui.css`.
+- `npm run build:lib` (config: `vite.lib.config.js`) compiles it to `dist-ui/ui.js` + `dist-ui/ui.css` (tokens + Tailwind utilities) + per-component `.d.ts`; declared in `package.json` `exports`. `dist-ui/` is git-ignored. This build is separate from the app build and not part of packaging/deploy.
+- Smart, data-coupled components (`Header`, `SongList`, `CameraTeam`, `SettingsModal`, `SetupWizard`) stay in `src/components/` and compose the `src/ui` primitives.
 
 ### Frontend structure (`src/`)
 - `src/main.jsx` — mounts `<App/>`

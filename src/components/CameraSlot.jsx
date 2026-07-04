@@ -1,4 +1,5 @@
-import Avatar from './Avatar.jsx';
+import { Avatar } from '../ui';
+import { photoProxyUrl } from '../lib/format.js';
 
 const DIR_GRAD = 'linear-gradient(150deg, #e2996f, #9a5232)';
 
@@ -24,7 +25,7 @@ export default function CameraSlot({ label, isDirector, isEmpty, isDeclined, peo
             <Avatar
               key={i}
               name={p.name}
-              photoUrl={p.photoUrl}
+              src={photoProxyUrl(p.photoUrl)}
               gradient={isDirector ? DIR_GRAD : p.gradient}
               size={52}
               ringColor={isDirector ? 'rgba(217,119,87,0.5)' : 'var(--avatar-ring)'}

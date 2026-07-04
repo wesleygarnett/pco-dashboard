@@ -1,4 +1,4 @@
-import Field, { inputClass } from './Field.jsx';
+import { Field, controlClass as inputClass } from '../../ui';
 import { getTimezoneOptions } from '../../lib/positions.js';
 
 export function CredentialsFields({ draft, setField, envLocked, secretPlaceholder }) {

@@ -12,7 +12,13 @@
       "Bash(ssh-add -l)",
       "Bash(git remote:*)",
       "Bash(grep -n \"leads-badges, .desc-bubbles\\\\|\\\\.song-box {\\\\|min-height: clamp\\(56px\\\\|overflow: hidden;\" \"/Users/wesleygarnett/Documents/GitHub/pco-dashboard/public/index.html\")",
-      "Bash(npm -v)"
+      "Bash(npm -v)",
+      "Bash(node .ds-sync/package-build.mjs --config .design-sync/config.json --node-modules ./node_modules --entry ./dist-ui/ui.js --out ./ds-bundle)",
+      "Bash(node .ds-sync/lib/preview-rebuild.mjs --config .design-sync/config.json --node-modules ./node_modules --out ./ds-bundle --components Overlay)",
+      "Bash(node .ds-sync/package-capture.mjs --out ./ds-bundle --components Overlay)",
+      "Bash(node .ds-sync/package-validate.mjs ./ds-bundle)",
+      "Bash(node .ds-sync/package-capture.mjs --out ./ds-bundle)",
+      "Bash(node .ds-sync/resync.mjs --config .design-sync/config.json --node-modules ./node_modules --entry ./dist-ui/ui.js --out ./ds-bundle)"
     ]
   }
 }
