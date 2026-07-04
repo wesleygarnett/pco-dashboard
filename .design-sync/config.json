@@ -1,0 +1,15 @@
+{
+  "projectId": "80efb048-2a01-40d0-b721-775597538915",
+  "shape": "package",
+  "pkg": "pco-service-dashboard",
+  "globalName": "PCODashboardUI",
+  "buildCmd": "npm run build:lib",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": "./dist-ui/ui.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "overrides": {
+    "Overlay": { "cardMode": "single", "viewport": "800x700" },
+    "Button": { "cardMode": "column" },
+    "Field": { "cardMode": "column" }
+  }
+}
