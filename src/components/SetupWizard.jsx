@@ -131,7 +131,7 @@ export default function SetupWizard({ cfg, onComplete }) {
           <div
             key={d}
             className="h-2 w-2 rounded-full"
-            style={{ background: d === step ? 'var(--purple)' : 'rgba(255,255,255,0.15)' }}
+            style={{ background: d === step ? 'var(--accent)' : 'rgba(255,255,255,0.15)' }}
             title={STEP_TITLES[d]}
           />
         ))}

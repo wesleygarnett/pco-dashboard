@@ -90,13 +90,11 @@ jobs:
         shell: bash
         run: |
           shopt -s nullglob
+          # User-facing installers only — auto-update metadata (.yml/.zip/.blockmap)
+          # stays in CI artifacts, not on the release page.
           files=(
             release-assets/windows/*.exe
-            release-assets/windows/*.yml
-            release-assets/windows/*.blockmap
             release-assets/macos/*.dmg
-            release-assets/macos/*.zip
-            release-assets/macos/*.blockmap
           )
 
           if [ ${#files[@]} -eq 0 ]; then

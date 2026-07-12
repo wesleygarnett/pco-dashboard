@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Field, controlClass as inputClass } from '../../ui';
+import { useEffect, useRef, useState } from 'react';
+import { Button, Field, controlClass as inputClass } from '../../ui';
 import { getTimezoneOptions } from '../../lib/positions.js';
 
 export function CredentialsFields({ draft, setField, envLocked, secretPlaceholder }) {
@@ -60,6 +60,89 @@ export function ServiceTypeField({ draft, setField, serviceTypes }) {
   );
 }
 
+function LogoField({ draft, setField }) {
+  const fileRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  function handleFile(file) {
+    if (!file || !/^image\/(png|jpeg)$/.test(file.type)) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      // Downscale to 128px max so the data URL stays small in settings.json
+      const max = 128;
+      const scale = Math.min(max / img.width, max / img.height, 1);
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      setField('orgLogo', canvas.toDataURL('image/png'));
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+  }
+
+  return (
+    <Field label="Logo" fullSpan hint="Shown in the header instead of the emoji icon.">
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] text-[20px]">
+          {draft.orgLogo ? (
+            <img src={draft.orgLogo} alt="Logo preview" className="h-full w-full object-contain" />
+          ) : (
+            draft.orgIcon || '⛪'
+          )}
+        </div>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => fileRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              fileRef.current?.click();
+            }
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            handleFile(e.dataTransfer.files?.[0]);
+          }}
+          className={`flex-1 cursor-pointer rounded-lg border border-dashed px-4 py-3 text-center text-[13px] font-medium ${
+            dragOver
+              ? 'border-[var(--accent-border-strong)] bg-[var(--accent-bg)] text-[var(--text)]'
+              : 'border-white/15 bg-white/[0.03] text-[var(--muted)] hover:border-white/25'
+          }`}
+        >
+          Drag a .png or .jpg here, or click to browse
+        </div>
+        {draft.orgLogo && (
+          <Button variant="secondary" onClick={() => setField('orgLogo', '')}>
+            Remove
+          </Button>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/png,image/jpeg"
+          className="hidden"
+          onChange={(e) => {
+            handleFile(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+      </div>
+    </Field>
+  );
+}
+
 export function DisplayFields({ draft, setField, includePollInterval }) {
   const zones = getTimezoneOptions();
   return (
@@ -88,6 +171,7 @@ export function DisplayFields({ draft, setField, includePollInterval }) {
           ))}
         </select>
       </Field>
+      <LogoField draft={draft} setField={setField} />
       {includePollInterval && (
         <Field label="Poll Interval">
           <select

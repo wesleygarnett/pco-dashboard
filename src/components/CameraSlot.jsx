@@ -1,7 +1,7 @@
 import { Avatar } from '../ui';
 import { photoProxyUrl } from '../lib/format.js';
 
-const DIR_GRAD = 'linear-gradient(150deg, #e2996f, #9a5232)';
+const DIR_GRAD = 'var(--avatar-grad-director)';
 
 export default function CameraSlot({ label, isDirector, isEmpty, isDeclined, people }) {
   return (
@@ -28,16 +28,17 @@ export default function CameraSlot({ label, isDirector, isEmpty, isDeclined, peo
               src={photoProxyUrl(p.photoUrl)}
               gradient={isDirector ? DIR_GRAD : p.gradient}
               size={52}
-              ringColor={isDirector ? 'rgba(217,119,87,0.5)' : 'var(--avatar-ring)'}
+              ringColor={isDirector ? 'var(--avatar-ring-director)' : 'var(--avatar-ring)'}
             />
           ))}
         </div>
       )}
       <div
-        className="text-[11px] font-bold uppercase tracking-wide"
-        style={{ color: isDeclined ? 'var(--danger)' : 'var(--muted)' }}
+        className="text-center text-[11px] font-bold uppercase tracking-wide"
+        style={{ color: isDeclined ? 'var(--danger-bright)' : 'var(--muted)' }}
       >
-        {isDeclined ? 'Declined' : label.toUpperCase()}
+        {label.toUpperCase()}
+        {isDeclined && <span className="block whitespace-nowrap">Declined</span>}
       </div>
     </div>
   );

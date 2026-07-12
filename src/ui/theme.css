@@ -1,49 +1,65 @@
-/* Terracotta "Glass Panel" theme — ported from public/index.html's :root block */
+/* Night-mode "Glass Panel" theme — violet primary accent with green secondary */
 :root {
-  /* ---- primary accent (single warm terracotta family) ---- */
-  --cyan: #e2996f;
-  --cyan-bg: rgba(226, 153, 111, 0.1);
-  --cyan-glow: rgba(226, 153, 111, 0.14);
-  --purple: #e2996f;
-  --purple-bg: rgba(226, 153, 111, 0.12);
-  --purple-glow: rgba(226, 153, 111, 0.16);
-  --amber: #e2996f;
-  --amber-bg: rgba(226, 153, 111, 0.1);
-  --amber-glow: rgba(226, 153, 111, 0.14);
-  --green: #7bb989;
-  --green-bg: rgba(123, 185, 137, 0.15);
-  --bg: #0b0a09;
+  /* ---- primary accent (violet) ---- */
+  --accent: #a78bfa;
+  --accent-bg: rgba(167, 139, 250, 0.12);
+  --accent-glow: rgba(167, 139, 250, 0.16);
+  --accent-border: rgba(167, 139, 250, 0.35);
+  --accent-border-strong: rgba(167, 139, 250, 0.45);
+  --accent-border-soft: rgba(167, 139, 250, 0.18);
+
+  /* Deprecated legacy color names — use --accent* instead */
+  --cyan: var(--accent);
+  --cyan-bg: var(--accent-bg);
+  --cyan-glow: var(--accent-glow);
+  --purple: var(--accent);
+  --purple-bg: var(--accent-bg);
+  --purple-glow: var(--accent-glow);
+  --amber: var(--accent);
+  --amber-bg: var(--accent-bg);
+  --amber-glow: var(--accent-glow);
+
+  /* ---- secondary accent (green) ---- */
+  --green: #6ee7a0;
+  --green-bg: rgba(110, 231, 160, 0.14);
+  --bg: #0a0a11;
   --s1: rgba(255, 255, 255, 0.09);
   --s2: rgba(255, 255, 255, 0.05);
   --border: rgba(255, 255, 255, 0.12);
-  --text: #f7f2ea;
-  --muted: rgba(242, 237, 230, 0.5);
-  --dim: rgba(242, 237, 230, 0.3);
-  --plan-option-bg: #17130f;
-  --label-bg: #17130f;
-  --purple-border: rgba(226, 153, 111, 0.35);
-  --purple-border-strong: rgba(226, 153, 111, 0.4);
-  --purple-border-soft: rgba(226, 153, 111, 0.18);
-  --cyan-border: rgba(226, 153, 111, 0.35);
-  --cyan-border-strong: rgba(226, 153, 111, 0.4);
-  --amber-border: rgba(226, 153, 111, 0.35);
-  --amber-border-strong: rgba(226, 153, 111, 0.4);
-  --green-border: rgba(123, 185, 137, 0.4);
-  --avatar-ring: #17130f;
-  --live: #7bb989;
-  --danger: #c75a46;
-  --danger-text: rgba(199, 90, 70, 0.85);
-  --danger-bg: rgba(199, 90, 70, 0.1);
-  --danger-border: rgba(199, 90, 70, 0.35);
-  --note-text: #e2996f;
-  --note-placeholder: rgba(242, 237, 230, 0.3);
+  --text: #f4f2fa;
+  --muted: rgba(238, 236, 248, 0.55);
+  --dim: rgba(238, 236, 248, 0.32);
+  --plan-option-bg: #16131f;
+  --label-bg: #16131f;
+  --purple-border: var(--accent-border);
+  --purple-border-strong: var(--accent-border-strong);
+  --purple-border-soft: var(--accent-border-soft);
+  --cyan-border: var(--accent-border);
+  --cyan-border-strong: var(--accent-border-strong);
+  --amber-border: var(--accent-border);
+  --amber-border-strong: var(--accent-border-strong);
+  --green-border: rgba(110, 231, 160, 0.4);
+  --avatar-ring: #16131f;
+  --avatar-ring-director: rgba(167, 139, 250, 0.5);
+  --live: #6ee7a0;
+  --danger: #e06060;
+  /* Lighter red for small (≤12px) text on the dark glass surfaces */
+  --danger-bright: #f09595;
+  --danger-text: rgba(224, 96, 96, 0.85);
+  --danger-bg: rgba(224, 96, 96, 0.1);
+  --danger-border: rgba(224, 96, 96, 0.35);
+  --note-text: #8be8ae;
+  --note-accent: rgba(110, 231, 160, 0.55);
+  --note-bg: rgba(110, 231, 160, 0.06);
+  --note-placeholder: rgba(238, 236, 248, 0.32);
+  --overlay-bg: #14121d;
 
   /* ---- avatar gradients ---- */
-  --avatar-grad-1: linear-gradient(150deg, #e2996f, #9a5232);
-  --avatar-grad-2: linear-gradient(150deg, #d8c7ae, #93805f);
-  --avatar-grad-3: linear-gradient(150deg, #b98cae, #6d4c6a);
+  --avatar-grad-1: linear-gradient(150deg, #a78bfa, #6d28d9);
+  --avatar-grad-2: linear-gradient(150deg, #6ee7a0, #1f8a4c);
+  --avatar-grad-3: linear-gradient(150deg, #818cf8, #4338ca);
   --avatar-grad-empty: rgba(255, 255, 255, 0.05);
-  --avatar-grad-director: linear-gradient(150deg, #e2996f, #9a5232);
+  --avatar-grad-director: linear-gradient(150deg, #a78bfa, #6d28d9);
 
   color-scheme: dark;
 }
@@ -86,9 +102,9 @@
 }
 
 .glass-card.is-changed {
-  background: linear-gradient(150deg, rgba(217, 119, 87, 0.16), rgba(255, 255, 255, 0.03));
-  border-color: var(--purple-border-strong);
+  background: linear-gradient(150deg, rgba(167, 139, 250, 0.16), rgba(255, 255, 255, 0.03));
+  border-color: var(--accent-border-strong);
   box-shadow:
-    0 0 0 1px rgba(217, 119, 87, 0.15),
-    0 20px 50px rgba(217, 119, 87, 0.12);
+    0 0 0 1px rgba(167, 139, 250, 0.15),
+    0 20px 50px rgba(167, 139, 250, 0.12);
 }

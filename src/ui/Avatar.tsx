@@ -42,7 +42,7 @@ export default function Avatar({
         height: size,
         background: gradient,
         border: `3px solid ${ringColor}`,
-        color: '#211008',
+        color: '#171226',
         fontSize: size * 0.35,
         ...style,
       }}

@@ -17,7 +17,7 @@ export default function Overlay({ children, onClose }: OverlayProps) {
     >
       <div
         className="glass-card flex max-h-[85vh] w-full max-w-[720px] flex-col gap-5 overflow-y-auto p-8"
-        style={{ background: '#141210' }}
+        style={{ background: 'var(--overlay-bg, #14121d)' }}
       >
         {children}
       </div>

@@ -2,9 +2,9 @@ import CameraSlot from './CameraSlot.jsx';
 
 export default function CameraTeam({ positions }) {
   return (
-    <div className="flex shrink-0 items-center justify-center">
+    <div className="flex shrink-0 items-center overflow-x-auto">
       <div
-        className="glass-pill flex items-center"
+        className="glass-pill mx-auto flex w-max items-center"
         style={{
           gap: 18,
           padding: '12px 32px',

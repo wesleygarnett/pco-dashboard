@@ -137,7 +137,8 @@ export default function App() {
     const isLive = diff <= 0 && diff > -LIVE_WINDOW_MS;
     const isPast = diff <= -LIVE_WINDOW_MS;
     return {
-      label: isLive ? '● LIVE' : diff > 0 ? fmtCountdown(diff) : fmtTime(new Date(t), cfg?.timezone),
+      time: fmtTime(new Date(t), cfg?.timezone),
+      countdown: !isLive && diff > 0 ? fmtCountdown(diff) : null,
       isLive,
       isPast,
     };
@@ -152,6 +153,9 @@ export default function App() {
     setCfg(settings);
     cfgRef.current = settings;
     setSetupRequired(false);
+    // Enter loading state before clearing the dashboard — the 'ready' branch
+    // renders dashboard.positions and would crash on the null dashboard.
+    setStatus({ state: 'loading', message: 'Loading service…' });
     setDashboard(null);
     setChangedSongIds(new Set());
     songTitlesRef.current = {};
@@ -175,12 +179,13 @@ export default function App() {
   }
 
   return (
-    <div className="grid h-full grid-rows-[auto_1fr_auto] gap-4 p-4">
+    <div className="flex min-h-full flex-col gap-4 p-4 md:grid md:h-full md:grid-rows-[auto_1fr_auto]">
       <ParticleBackground />
       <Header
         orgName={cfg?.orgName || 'My Church'}
         orgSub={cfg?.orgSub || 'Sunday Services'}
         orgIcon={cfg?.orgIcon || '⛪'}
+        orgLogo={cfg?.orgLogo || ''}
         serviceTimes={headerServiceTimes}
         speakerName={null}
         testMode={TEST_MODE}

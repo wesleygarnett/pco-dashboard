@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS = {
   orgName: 'My Church',
   orgSub: 'Sunday Services',
   orgIcon: '⛪',
+  orgLogo: '',
   timezone: 'America/New_York',
   videoTeamName: 'video production',
   bandTeamNames: ['band', 'vocal'],
@@ -52,6 +53,14 @@ function sanitizeMatcherString(value, fallback = '') {
 
 function sanitizeBoolean(value) {
   return !!value;
+}
+
+// Logo images are stored inline as data URLs; the client downscales to 128px
+// before upload, so anything huge or non-image is rejected outright.
+function sanitizeLogo(value) {
+  const v = sanitizeString(value).trim();
+  if (!v || v.length > 500000) return '';
+  return /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(v) ? v : '';
 }
 
 function sanitizeStringArray(value, fallback) {
@@ -98,6 +107,7 @@ function normalizeSettings(input = {}) {
     orgName: sanitizeString(input.orgName, defaults.orgName).trim() || defaults.orgName,
     orgSub: sanitizeString(input.orgSub, defaults.orgSub).trim() || defaults.orgSub,
     orgIcon: sanitizeString(input.orgIcon, defaults.orgIcon).trim() || defaults.orgIcon,
+    orgLogo: sanitizeLogo(input.orgLogo),
     timezone: sanitizeString(input.timezone, defaults.timezone).trim() || defaults.timezone,
     videoTeamName: sanitizeMatcherString(input.videoTeamName, defaults.videoTeamName) || defaults.videoTeamName,
     bandTeamNames: sanitizeStringArray(input.bandTeamNames, defaults.bandTeamNames),

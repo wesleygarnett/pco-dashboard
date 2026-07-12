@@ -13,7 +13,7 @@ export interface FieldProps {
 
 /** Shared class for text inputs and selects so form controls look consistent. */
 export const controlClass =
-  'rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[14px] text-[var(--text)] outline-none focus:border-[var(--purple-border-strong)]';
+  'rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[14px] text-[var(--text)] outline-none focus:border-[var(--accent-border-strong)]';
 
 /** A labeled form field: label on top, an optional hint below, and your control as children. */
 export default function Field({ label, hint, fullSpan, children }: FieldProps) {

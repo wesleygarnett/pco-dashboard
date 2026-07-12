@@ -3,14 +3,14 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 export type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
-  /** Visual emphasis: `primary` (filled terracotta), `secondary` (subtle glass), `danger` (destructive). */
+  /** Visual emphasis: `primary` (filled violet), `secondary` (subtle glass), `danger` (destructive). */
   variant?: ButtonVariant;
   children?: ReactNode;
   type?: 'button' | 'submit' | 'reset';
 }
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
-  primary: 'bg-[var(--purple)] text-[#211008]',
+  primary: 'bg-[var(--accent)] text-[#171226]',
   secondary: 'border border-white/10 bg-white/[0.05] text-[var(--text)]',
   danger: 'border border-[var(--danger-border)] bg-[var(--danger-bg)] text-[var(--danger)]',
 };

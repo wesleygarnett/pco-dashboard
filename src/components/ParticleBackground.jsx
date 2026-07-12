@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 
-// Terracotta family (accent, cream, plum) — matches the new theme's avatar gradients
+// Night palette (violet, green, indigo) — matches the theme's avatar gradients
 const COLORS = [
-  [226, 153, 111], // terracotta
-  [216, 199, 174], // cream/tan
-  [185, 140, 174], // muted plum
+  [167, 139, 250], // violet
+  [110, 231, 160], // green
+  [129, 140, 248], // indigo
 ];
 
 export default function ParticleBackground() {

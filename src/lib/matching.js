@@ -17,7 +17,11 @@ export function parseLeaderNames(description) {
   const text = description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   const match = text.match(/\+?\s*lead[s]?\s*[:\-]\s*([^\n+|<]+)/i);
   if (!match) return [];
-  return match[1].split(/[,&]+/).map((s) => s.trim()).filter(Boolean);
+  // The lead line often carries extra info after bullets ("Lead: Bekah • Altos
+  // on Melody • …") — only the first segment is the leader name(s); the rest
+  // surfaces as info bubbles via parseDescriptionBubbles.
+  const namePart = match[1].split('•')[0];
+  return namePart.split(/[,&]+/).map((s) => s.trim()).filter(Boolean);
 }
 
 // Parse description into info bubbles — strips HTML, splits on '+', removes Lead line
@@ -29,9 +33,14 @@ export function parseDescriptionBubbles(description) {
     .trim();
   return text
     .split(/\+/)
-    .map((s) => s.trim())
+    .map((s) => s.replace(/^[>\s]+/, '').trim())
     .filter((s) => s.length > 0)
-    .filter((s) => !/^leads?\s*[:\-]/i.test(s));
+    .flatMap((s) => {
+      if (!/^leads?\s*[:\-]/i.test(s)) return [s];
+      // Lead segment: the name renders as its own pill (parseLeaderNames);
+      // keep any bullet-separated extras as individual bubbles.
+      return s.split('•').slice(1).map((p) => p.trim()).filter(Boolean);
+    });
 }
 
 // Returns parallel array to leaderNames: matched PlanPerson or null if not found

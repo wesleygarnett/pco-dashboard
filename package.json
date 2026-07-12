@@ -1,6 +1,6 @@
 {
   "name": "pco-service-dashboard",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Planning Center Services display dashboard for meeting room TV",
   "author": "Wesley",
   "main": "electron-main.js",
