@@ -85,6 +85,8 @@ jobs:
         run: gh release create "${GITHUB_REF_NAME}" --generate-notes --verify-tag || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No checkout in this job — gh needs the repo named explicitly
+          GH_REPO: ${{ github.repository }}
 
       - name: Publish release assets
         shell: bash
@@ -105,3 +107,4 @@ jobs:
           gh release upload "${GITHUB_REF_NAME}" "${files[@]}" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
