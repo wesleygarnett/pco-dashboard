@@ -10,12 +10,13 @@ There is no `ThemeProvider` — theming is CSS custom properties on `:root` (fro
 
 ## Styling idiom: Tailwind utilities + CSS variable tokens
 
-Components are styled with Tailwind utility classes, with the terracotta theme's colors/surfaces threaded in via `var(--token)` inside utility brackets (e.g. `bg-[var(--purple)]`, `border-[var(--danger-border)]`) rather than named Tailwind color classes. Real tokens available (see `theme.css`):
+Components are styled with Tailwind utility classes, with the night theme's colors/surfaces threaded in via `var(--token)` inside utility brackets (e.g. `bg-[var(--accent)]`, `border-[var(--danger-border)]`) rather than named Tailwind color classes. Real tokens available (see `theme.css`):
 
 - **Surface/text**: `--bg`, `--s1`, `--s2`, `--border`, `--text`, `--muted`, `--dim`
-- **Accent** (single warm terracotta family — `--cyan`/`--purple`/`--amber` are historical aliases, all the same hue): `--purple`, `--purple-bg`, `--purple-border`, `--purple-border-strong`
-- **Semantic**: `--danger`, `--danger-bg`, `--danger-border`, `--live` (success green)
-- **Avatar gradients**: `--avatar-grad-1`, `--avatar-grad-2`, `--avatar-grad-3`, `--avatar-grad-director`, `--avatar-ring`
+- **Accent** (violet primary — `--cyan`/`--purple`/`--amber` are deprecated aliases of the same violet; prefer `--accent*`): `--accent`, `--accent-bg`, `--accent-border`, `--accent-border-strong`, `--accent-border-soft`
+- **Secondary accent (green)**: `--green`, `--green-bg`, `--green-border`, `--live` (live/success); note styling: `--note-text`, `--note-accent`, `--note-bg`
+- **Semantic**: `--danger`, `--danger-bright` (small red text), `--danger-bg`, `--danger-border`
+- **Avatar gradients**: `--avatar-grad-1` (violet), `--avatar-grad-2` (green), `--avatar-grad-3` (indigo), `--avatar-grad-director`, `--avatar-ring`, `--avatar-ring-director`
 
 Every component accepts `className` for one-off layout tweaks (margins, flex/grid placement) — compose with utility classes, don't fight the component's own visual styling. `Field` exports `controlClass`, a shared string of utility classes for building consistent `<input>`/`<select>` controls to pass as children.
 

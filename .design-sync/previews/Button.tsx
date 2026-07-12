@@ -5,7 +5,7 @@ import { Button } from 'pco-service-dashboard';
 const backdrop: CSSProperties = { background: 'var(--bg)', padding: 24, borderRadius: 12 };
 const Backdrop = ({ children }: { children: ReactNode }) => <div style={backdrop}>{children}</div>;
 
-/** The three variants, side by side — filled terracotta, subtle glass, and destructive. */
+/** The three variants, side by side — filled violet, subtle glass, and destructive. */
 export function Variants() {
   return (
     <Backdrop>

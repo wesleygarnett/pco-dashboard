@@ -11,7 +11,7 @@ const Backdrop = ({ children }: { children: ReactNode }) => <div style={backdrop
 const PHOTO =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#9a5232"/><circle cx="40" cy="30" r="16" fill="#f7f2ea"/><rect x="14" y="52" width="52" height="28" rx="14" fill="#f7f2ea"/></svg>',
+    '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#6d28d9"/><circle cx="40" cy="30" r="16" fill="#f4f2fa"/><rect x="14" y="52" width="52" height="28" rx="14" fill="#f4f2fa"/></svg>',
   );
 
 /** Team row: a stack of teammates, initials by default — the CameraSlot composition. */
@@ -26,7 +26,7 @@ export function TeamRow() {
           <Avatar name="Alex Moon" gradient="var(--avatar-grad-2)" size={52} />
         </div>
         <div style={{ marginLeft: -12 }}>
-          <Avatar name="Rae Kim" gradient="var(--avatar-grad-3)" size={52} ringColor="rgba(217,119,87,0.5)" />
+          <Avatar name="Rae Kim" gradient="var(--avatar-grad-3)" size={52} ringColor="var(--avatar-ring-director)" />
         </div>
       </div>
     </Backdrop>

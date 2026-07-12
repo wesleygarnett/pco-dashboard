@@ -12,6 +12,8 @@
 
 None outstanding — render check is clean (0 bad, 0 thin, 0 variantsIdentical) as of this sync.
 
+- 2026-07-11 re-sync: theme pivoted from terracotta to night-mode violet/green. Canonical tokens are now `--accent*`; `--purple*`/`--cyan*`/`--amber*` remain as deprecated aliases in `theme.css` for compat — if the alias block is ever removed, update `conventions.md`'s token list in the same change.
+
 ## Re-sync risks — what to watch next time
 
 - If `src/ui` grows past this initial 6 components, re-check whether any new component itself uses `position: fixed`/`position: sticky` internally (like `Overlay`) — it will need the same sized-transform-wrapper trick in its preview, not just a `cardMode` override.
