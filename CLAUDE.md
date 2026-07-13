@@ -94,6 +94,7 @@ Two run modes share the same backend:
 - `videoTeamName`, `bandTeamNames`, `directorKeywords` are normalized to lowercase on save — if team-matching breaks, check that saved values match actual PCO team/position names
 - `videoPositions` patterns are validated as regex server-side before save
 - `pollIntervalMs` is whitelisted to specific values: `0` (off), `30000`, `60000`, `120000`, `300000`
+- `orgLogo` is an optional custom header logo stored inline as a data URL (the client downscales the dropped `.png`/`.jpg` to 128px before saving). Server-side `sanitizeLogo()` accepts only `data:image/(png|jpeg)` ≤500 KB and rejects anything else to empty. When set, it replaces the `orgIcon` emoji in the header.
 - Desktop settings stored in a per-user file outside the repo (`settings.json` at the app's user data path)
 - Hosted/Render settings are file-backed and **do not persist across redeploys** — consider env-based config for `serviceTypeId` if that matters
 
@@ -109,7 +110,10 @@ Two run modes share the same backend:
 - Frontend build must run (`npm run build`) before packaging (`dist*`) or before `node server.js`/Electron will serve current code — CI, Electron scripts, and Render's build command must all include it
 - Don't break the Render-hosted path when changing desktop behavior
 - `signAndEditExecutable: false` for Windows builds (local packaging requirement)
-- Branch `main` = live hosted version (stable); active development was on `codex/app`, then migrated to React on branch `react`
+- Branch `main` is the live/released React app (v2.0.0+, tagged `v*` for desktop releases); `react` is the active development branch, currently level with `main`. The pre-React single-file `public/index.html` app is gone — `public/` is now purely a git-ignored build artifact, so any run path that serves it (`node server.js`, Electron, Render) must build first.
 
 ## GitHub Releases
-Workflow `.github/workflows/release-desktop.yml` builds Windows (NSIS) and macOS (DMG) on tag push. The release asset upload patterns have previously been too broad — only upload `.exe` and `.dmg` files for user-facing releases.
+Workflow `.github/workflows/release-desktop.yml` builds Windows (NSIS) and macOS (DMG) on `v*` tag push (version comes from `package.json` — bump it before tagging). Only `.exe`/`.dmg` are published as user-facing release assets; the auto-update metadata (`.yml`/`.zip`/`.blockmap`) stays in CI artifacts and is not attached to the release.
+- The `release` job checks out no repo, so `gh` needs `GH_REPO: ${{ github.repository }}` in its env — without it, `gh release create/upload` fails with `not a git repository`.
+- electron-builder also **auto-creates a draft release** with all assets during the build job itself, so the installers may already be attached (as a draft) before the `release` job runs. Reconcile/publish that draft rather than assuming the job created everything.
+- macOS build is **arm64 only** (Apple Silicon). Installing the CI-built DMG is the reliable way to get a correct desktop build, since CI always runs `npm run build` before packaging (a locally-built app can carry a stale bundled `public/`).
