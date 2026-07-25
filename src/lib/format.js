@@ -6,6 +6,13 @@ export function capFirst(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
+// Song subtitles arrive parenthesized ("(Elevation Worship)") because they're
+// split off the PCO title. The mobile card renders them as their own line where
+// the parens are visual noise; the desktop row keeps them inline as-is.
+export function stripParens(s) {
+  return s ? s.replace(/^\s*\(\s*|\s*\)\s*$/g, '') : s;
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function fmtCountdown(ms) {

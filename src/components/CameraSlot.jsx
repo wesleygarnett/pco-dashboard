@@ -6,7 +6,7 @@ const DIR_GRAD = 'var(--avatar-grad-director)';
 export default function CameraSlot({ label, isDirector, isEmpty, isDeclined, people }) {
   return (
     <div
-      className="flex flex-col items-center gap-1.5"
+      className="flex w-20 flex-col items-center gap-1.5 lg:w-auto"
       style={{ opacity: isEmpty ? 0.4 : isDeclined ? 0.65 : 1 }}
     >
       {isEmpty ? (
@@ -33,8 +33,10 @@ export default function CameraSlot({ label, isDirector, isEmpty, isDeclined, peo
           ))}
         </div>
       )}
+      {/* Two-line min-height keeps single- and double-word labels ("CAM 1" vs
+          "BROADCAST DIRECTOR") on equal-height rows in the mobile grid. */}
       <div
-        className="text-center text-[11px] font-bold uppercase tracking-wide"
+        className="min-h-8 text-center text-[12px] font-bold uppercase leading-tight tracking-wide lg:min-h-0"
         style={{ color: isDeclined ? 'var(--danger-bright)' : 'var(--muted)' }}
       >
         {label.toUpperCase()}

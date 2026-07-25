@@ -10,7 +10,10 @@ export default function SongList({ songs, onNoteChange, onDismissChanged }) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
+    // Below lg: a single-column grid whose auto-rows are 1fr, so every card is
+    // sized to the tallest one and the list reads as a uniform stack. At lg the
+    // cards go back to flex-filling the fixed-height wall layout.
+    <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 [grid-auto-rows:1fr] lg:flex lg:flex-col lg:[grid-auto-rows:auto]">
       {songs.map((song, idx) => (
         <SongCard
           key={song.id}
