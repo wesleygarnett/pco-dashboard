@@ -55,35 +55,34 @@ export default function SongCard({
       }}
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-center lg:gap-[22px]">
-        {/* Zone 1 — track number + title. On lg these flatten into the row. */}
-        <div className="flex min-w-0 items-baseline gap-3 sm:gap-4 lg:contents">
-          <span className="min-w-8 shrink-0 whitespace-nowrap text-[28px] font-black leading-none text-[var(--accent)] sm:min-w-11 sm:text-[32px] lg:leading-normal lg:text-[36px]">
-            {index + 1}
-          </span>
+        {/* Zone 1 — track number + title on the left, leader photo(s) pinned to
+            the top-right corner. On lg all of these flatten into the row. */}
+        <div className="flex items-start justify-between gap-3 lg:contents">
+          <div className="flex min-w-0 items-baseline gap-3 sm:gap-4 lg:contents">
+            <span className="min-w-8 shrink-0 whitespace-nowrap text-[28px] font-black leading-none text-[var(--accent)] sm:min-w-11 sm:text-[32px] lg:leading-normal lg:text-[36px]">
+              {index + 1}
+            </span>
 
-          <h2 className="min-w-0 text-[20px] font-extrabold leading-tight text-[var(--text)] sm:text-[24px] lg:shrink-0 lg:whitespace-nowrap lg:leading-normal lg:text-[26px]">
-            {titleMain}
-            {titleSub && <span className="ml-2 text-[15px] font-medium text-[var(--muted)] sm:text-[16px] lg:text-[18px]">{titleSub}</span>}
-          </h2>
-        </div>
+            <h2 className="min-w-0 text-[20px] font-extrabold leading-tight text-[var(--text)] sm:text-[24px] lg:shrink-0 lg:whitespace-nowrap lg:leading-normal lg:text-[26px]">
+              {titleMain}
+              {titleSub && <span className="ml-2 text-[15px] font-medium text-[var(--muted)] sm:text-[16px] lg:text-[18px]">{titleSub}</span>}
+            </h2>
 
-        {changed && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDismissChanged?.();
-            }}
-            className="shrink-0 cursor-pointer self-start rounded-full border border-[var(--accent-border)] bg-[var(--accent-bg)] px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-[var(--accent)] lg:self-auto"
-            aria-label="Song updated — dismiss"
-          >
-            Updated ✕
-          </button>
-        )}
+            {changed && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDismissChanged?.();
+                }}
+                className="shrink-0 cursor-pointer self-center rounded-full border border-[var(--accent-border)] bg-[var(--accent-bg)] px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-[var(--accent)]"
+                aria-label="Song updated — dismiss"
+              >
+                Updated ✕
+              </button>
+            )}
+          </div>
 
-        {/* Zone 2 — leader photo(s) + metadata pills. Indented to line up under
-            the title on mobile; flattens into the row on lg. */}
-        <div className="flex min-w-0 items-start gap-3 pl-11 sm:pl-15 lg:contents lg:pl-0">
           {leaders.length > 0 && (
             <div className="flex shrink-0">
               {leaders.map((leader, i) => (
@@ -93,19 +92,21 @@ export default function SongCard({
               ))}
             </div>
           )}
+        </div>
 
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5 overflow-hidden">
-            {leadPills.map((p, i) => (
-              <Badge key={`lead-${i}`} variant="accent" className="max-w-[200px] truncate sm:max-w-[340px] lg:max-w-[520px]" style={{ fontSize: 14 }} title={p}>
-                {p}
-              </Badge>
-            ))}
-            {bubbles.map((b, i) => (
-              <Badge key={`bubble-${i}`} variant="neutral" className="max-w-[220px] shrink truncate lg:max-w-[220px]" title={b}>
-                {b}
-              </Badge>
-            ))}
-          </div>
+        {/* Zone 2 — metadata pills, indented to line up under the title on
+            mobile; flattens into the row on lg. */}
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 overflow-hidden pl-11 sm:pl-15 lg:pl-0">
+          {leadPills.map((p, i) => (
+            <Badge key={`lead-${i}`} variant="accent" className="max-w-[200px] truncate sm:max-w-[340px] lg:max-w-[520px]" style={{ fontSize: 14 }} title={p}>
+              {p}
+            </Badge>
+          ))}
+          {bubbles.map((b, i) => (
+            <Badge key={`bubble-${i}`} variant="neutral" className="max-w-[220px] shrink truncate lg:max-w-[220px]" title={b}>
+              {b}
+            </Badge>
+          ))}
         </div>
 
         {!showNoteStrip && (
