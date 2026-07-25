@@ -60,7 +60,7 @@ export default function Header({
           </div>
         )}
         <div className="flex min-w-0 flex-col gap-0.5 lg:flex-row lg:items-center lg:gap-x-[clamp(10px,1.2vw,16px)]">
-          <h1 className="truncate text-[20px] font-bold leading-tight text-[var(--text)]">{orgName}</h1>
+          <h1 className="truncate text-[18px] font-bold leading-tight text-[var(--text)] lg:text-[20px]">{orgName}</h1>
           {plans && plans.length > 1 ? (
             <div className="relative flex max-w-full items-center">
               <select
@@ -94,7 +94,7 @@ export default function Header({
           {serviceTimes.map((svc, i) => (
             <span
               key={i}
-              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[14px] font-bold sm:px-4 sm:text-[15px] ${
+              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[14px] font-bold sm:px-4 ${
                 svc.isPast
                   ? 'bg-white/[0.04] text-[var(--dim)]'
                   : svc.isLive

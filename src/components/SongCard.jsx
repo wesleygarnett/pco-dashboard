@@ -1,12 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
 import { Avatar, Badge } from '../ui';
-import { photoProxyUrl } from '../lib/format.js';
+import { photoProxyUrl, stripParens } from '../lib/format.js';
+
+// Below lg the card shows at most this many tags on one line so every card in
+// the list keeps identical geometry; the rest surface as a "+N" counter and are
+// all still rendered at lg, where the row can wrap.
+const MOBILE_TAG_LIMIT = 2;
 
 function PencilIcon({ size = 13 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
     </svg>
+  );
+}
+
+// `first` is the leader pill — kept at its natural width so the arrangement
+// note beside it absorbs the remaining space instead of both being squeezed.
+function TagBadge({ tag, first }) {
+  return (
+    <Badge
+      variant={tag.variant}
+      className={`truncate text-[13px] lg:max-w-[420px] lg:text-[14px] ${first ? 'shrink-0' : 'min-w-0 shrink'}`}
+      title={tag.label}
+    >
+      {tag.label}
+    </Badge>
   );
 }
 
@@ -40,9 +59,19 @@ export default function SongCard({
 
   const showNoteStrip = editingNote || !!noteValue;
 
+  // Leader name(s) first, then the arrangement notes — one list so the mobile
+  // two-tag cap always keeps the leader visible.
+  const tags = [
+    ...leadPills.map((label) => ({ label, variant: 'accent' })),
+    ...bubbles.map((label) => ({ label, variant: 'neutral' })),
+  ];
+  const visibleTags = tags.slice(0, MOBILE_TAG_LIMIT);
+  const overflowTags = tags.slice(MOBILE_TAG_LIMIT);
+  const hiddenTagCount = overflowTags.length;
+
   return (
     <div
-      className={`glass-card flex shrink-0 flex-col justify-center gap-3 overflow-hidden px-4 py-4 sm:px-6 sm:py-[18px] lg:flex-1 ${changed ? 'is-changed' : ''}`}
+      className={`glass-card flex h-full shrink-0 flex-col justify-center gap-3 overflow-hidden px-4 py-4 sm:px-6 sm:py-5 lg:flex-1 ${changed ? 'is-changed' : ''}`}
       style={{
         opacity: 0,
         animation: 'card-slide-in 0.4s ease forwards',
@@ -54,59 +83,70 @@ export default function SongCard({
         }
       }}
     >
-      <div className="flex flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-center lg:gap-[22px]">
-        {/* Zone 1 — track number + title on the left, leader photo(s) pinned to
-            the top-right corner. On lg all of these flatten into the row. */}
-        <div className="flex items-start justify-between gap-3 lg:contents">
-          <div className="flex min-w-0 items-baseline gap-3 sm:gap-4 lg:contents">
-            <span className="min-w-8 shrink-0 whitespace-nowrap text-[28px] font-black leading-none text-[var(--accent)] sm:min-w-11 sm:text-[32px] lg:leading-normal lg:text-[36px]">
-              {index + 1}
+      {/* Five siblings placed by .song-card-body: a 3-column grid below lg,
+          a single flex row at lg (see src/index.css). */}
+      <div className="song-card-body">
+        <span className="song-card-num flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--accent-border-soft)] bg-[var(--accent-bg)] text-[15px] font-extrabold leading-none text-[var(--accent)] lg:h-auto lg:w-auto lg:border-0 lg:bg-transparent lg:px-0 lg:text-[36px] lg:font-black">
+          {index + 1}
+        </span>
+
+        <h2 className="song-card-title min-w-0 text-[20px] font-extrabold leading-tight text-[var(--text)] lg:shrink-0 lg:whitespace-nowrap lg:text-[26px] lg:leading-normal">
+          <span className="song-card-title-main">{titleMain}</span>
+          {titleSub && (
+            <span className="song-card-artist truncate text-[14px] font-medium text-[var(--muted)] lg:text-[18px]">
+              <span className="lg:hidden">{stripParens(titleSub)}</span>
+              <span className="hidden lg:inline">{titleSub}</span>
             </span>
-
-            <h2 className="min-w-0 text-[20px] font-extrabold leading-tight text-[var(--text)] sm:text-[24px] lg:shrink-0 lg:whitespace-nowrap lg:leading-normal lg:text-[26px]">
-              {titleMain}
-              {titleSub && <span className="ml-2 text-[15px] font-medium text-[var(--muted)] sm:text-[16px] lg:text-[18px]">{titleSub}</span>}
-            </h2>
-
-            {changed && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDismissChanged?.();
-                }}
-                className="shrink-0 cursor-pointer self-center rounded-full border border-[var(--accent-border)] bg-[var(--accent-bg)] px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-[var(--accent)]"
-                aria-label="Song updated — dismiss"
-              >
-                Updated ✕
-              </button>
-            )}
-          </div>
-
-          {leaders.length > 0 && (
-            <div className="flex shrink-0">
-              {leaders.map((leader, i) => (
-                <div key={i} style={{ marginLeft: i > 0 ? -14 : 0, zIndex: leaders.length - i }}>
-                  <Avatar name={leader.name} src={photoProxyUrl(leader.photoUrl)} gradient={leader.gradient} size={52} />
-                </div>
-              ))}
-            </div>
           )}
-        </div>
+          {changed && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDismissChanged?.();
+              }}
+              className="ml-2 shrink-0 cursor-pointer rounded-full border border-[var(--accent-border)] bg-[var(--accent-bg)] px-2.5 py-0.5 align-middle text-[12px] font-extrabold uppercase tracking-wide text-[var(--accent)]"
+              aria-label="Song updated — dismiss"
+            >
+              Updated ✕
+            </button>
+          )}
+        </h2>
 
-        {/* Zone 2 — metadata pills, indented to line up under the title on
-            mobile; flattens into the row on lg. */}
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5 overflow-hidden pl-11 sm:pl-15 lg:pl-0">
-          {leadPills.map((p, i) => (
-            <Badge key={`lead-${i}`} variant="accent" className="max-w-[200px] truncate sm:max-w-[340px] lg:max-w-[520px]" style={{ fontSize: 14 }} title={p}>
-              {p}
-            </Badge>
+        {leaders.length > 0 && (
+          <div className="song-card-media flex shrink-0">
+            {leaders.map((leader, i) => (
+              <div key={i} style={{ marginLeft: i > 0 ? -14 : 0, zIndex: leaders.length - i }}>
+                <Avatar name={leader.name} src={photoProxyUrl(leader.photoUrl)} gradient={leader.gradient} size={52} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* One non-wrapping line below lg so card heights stay uniform; wraps
+            freely at lg where there's room for the full set. */}
+        <div className="song-card-tags flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden lg:flex-wrap">
+          {visibleTags.map((tag, i) => (
+            <TagBadge key={`${tag.variant}-${i}`} tag={tag} first={i === 0} />
           ))}
-          {bubbles.map((b, i) => (
-            <Badge key={`bubble-${i}`} variant="neutral" className="max-w-[220px] shrink truncate lg:max-w-[220px]" title={b}>
-              {b}
-            </Badge>
-          ))}
+          {hiddenTagCount > 0 && (
+            <>
+              {/* Hidden as a group below lg — putting `hidden` on this wrapper
+                  instead of each Badge avoids fighting Badge's own
+                  `inline-block`, which wins on display by source order. */}
+              <span className="hidden lg:contents">
+                {overflowTags.map((tag, i) => (
+                  <TagBadge key={`overflow-${tag.variant}-${i}`} tag={tag} />
+                ))}
+              </span>
+              <span
+                className="shrink-0 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[13px] font-semibold text-[var(--muted)] lg:hidden"
+                title={overflowTags.map((t) => t.label).join(' • ')}
+              >
+                +{hiddenTagCount}
+              </span>
+            </>
+          )}
         </div>
 
         {!showNoteStrip && (
@@ -116,7 +156,7 @@ export default function SongCard({
               e.stopPropagation();
               setEditingNote(true);
             }}
-            className="flex shrink-0 cursor-pointer items-center gap-1.5 self-end rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[12px] font-semibold text-[var(--dim)] hover:border-white/20 hover:text-[var(--muted)] lg:ml-auto lg:self-auto"
+            className="song-card-note flex shrink-0 cursor-pointer items-center gap-1.5 justify-self-end rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[13px] font-semibold text-[var(--dim)] hover:border-white/20 hover:text-[var(--muted)] lg:ml-auto lg:text-[12px]"
           >
             <PencilIcon />
             Add note
