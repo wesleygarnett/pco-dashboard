@@ -71,7 +71,11 @@ export default function SongCard({
 
   return (
     <div
-      className={`glass-card flex h-full shrink-0 flex-col justify-center gap-3 overflow-hidden px-4 py-4 sm:px-6 sm:py-5 lg:flex-1 ${changed ? 'is-changed' : ''}`}
+      // Content is top-aligned below lg: cards are equalized to a uniform
+      // height, so centering would split the leftover space and drop the
+      // avatar a different distance from the top on every card. All the slack
+      // goes to the bottom instead, pinning the avatar to a constant offset.
+      className={`glass-card flex h-full shrink-0 flex-col justify-start gap-3 overflow-hidden px-4 py-4 sm:px-6 sm:py-5 lg:flex-1 lg:justify-center ${changed ? 'is-changed' : ''}`}
       style={{
         opacity: 0,
         animation: 'card-slide-in 0.4s ease forwards',
