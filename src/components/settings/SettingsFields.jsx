@@ -4,7 +4,7 @@ import { getTimezoneOptions } from '../../lib/positions.js';
 
 export function CredentialsFields({ draft, setField, envLocked, secretPlaceholder }) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Field label="PCO App ID">
         <input
           type="text"
@@ -146,7 +146,7 @@ function LogoField({ draft, setField }) {
 export function DisplayFields({ draft, setField, includePollInterval }) {
   const zones = getTimezoneOptions();
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Field label="Organization Name">
         <input type="text" className={inputClass} value={draft.orgName} onChange={(e) => setField('orgName', e.target.value)} />
       </Field>
@@ -193,7 +193,7 @@ export function DisplayFields({ draft, setField, includePollInterval }) {
 
 export function TeamMatchingFields({ draft, setField }) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Field label="Production Team Name">
         <input
           type="text"

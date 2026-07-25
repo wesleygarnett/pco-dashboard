@@ -42,9 +42,8 @@ export default function SongCard({
 
   return (
     <div
-      className={`glass-card flex shrink-0 flex-col justify-center gap-3 overflow-hidden md:flex-1 ${changed ? 'is-changed' : ''}`}
+      className={`glass-card flex shrink-0 flex-col justify-center gap-3 overflow-hidden px-4 py-4 sm:px-6 sm:py-[18px] lg:flex-1 ${changed ? 'is-changed' : ''}`}
       style={{
-        padding: '18px 26px',
         opacity: 0,
         animation: 'card-slide-in 0.4s ease forwards',
         animationDelay: `${animationDelay}s`,
@@ -55,14 +54,14 @@ export default function SongCard({
         }
       }}
     >
-      <div className="flex flex-wrap items-center gap-y-3 md:flex-nowrap" style={{ columnGap: 22 }}>
-        <span className="shrink-0 whitespace-nowrap text-[36px] font-black text-[var(--accent)]" style={{ minWidth: 43 }}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 sm:gap-x-[22px] lg:flex-nowrap">
+        <span className="min-w-[30px] shrink-0 whitespace-nowrap text-[28px] font-black text-[var(--accent)] sm:min-w-[43px] sm:text-[32px] lg:text-[36px]">
           {index + 1}
         </span>
 
-        <h2 className="shrink-0 text-[26px] font-extrabold text-[var(--text)] md:whitespace-nowrap">
+        <h2 className="min-w-0 text-[20px] font-extrabold text-[var(--text)] sm:text-[24px] lg:shrink-0 lg:whitespace-nowrap lg:text-[26px]">
           {titleMain}
-          {titleSub && <span className="ml-2 text-[18px] font-medium text-[var(--muted)]">{titleSub}</span>}
+          {titleSub && <span className="ml-2 text-[15px] font-medium text-[var(--muted)] sm:text-[16px] lg:text-[18px]">{titleSub}</span>}
         </h2>
 
         {changed && (
@@ -91,12 +90,12 @@ export default function SongCard({
 
         <div className="flex min-w-0 flex-wrap items-center gap-1.5 overflow-hidden">
           {leadPills.map((p, i) => (
-            <Badge key={`lead-${i}`} variant="accent" className="max-w-[280px] truncate sm:max-w-[520px]" style={{ fontSize: 14 }} title={p}>
+            <Badge key={`lead-${i}`} variant="accent" className="max-w-[180px] truncate sm:max-w-[340px] lg:max-w-[520px]" style={{ fontSize: 14 }} title={p}>
               {p}
             </Badge>
           ))}
           {bubbles.map((b, i) => (
-            <Badge key={`bubble-${i}`} variant="neutral" className="max-w-[220px] shrink truncate" title={b}>
+            <Badge key={`bubble-${i}`} variant="neutral" className="max-w-[160px] shrink truncate sm:max-w-[220px]" title={b}>
               {b}
             </Badge>
           ))}
