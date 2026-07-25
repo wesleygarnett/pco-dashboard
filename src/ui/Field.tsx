@@ -18,7 +18,7 @@ export const controlClass =
 /** A labeled form field: label on top, an optional hint below, and your control as children. */
 export default function Field({ label, hint, fullSpan, children }: FieldProps) {
   return (
-    <div className={`flex flex-col gap-1.5 ${fullSpan ? 'col-span-2' : ''}`}>
+    <div className={`flex flex-col gap-1.5 ${fullSpan ? 'sm:col-span-2' : ''}`}>
       <label className="text-[13px] font-semibold text-[var(--muted)]">{label}</label>
       {children}
       {hint && <div className="text-[12px] text-[var(--dim)]">{hint}</div>}

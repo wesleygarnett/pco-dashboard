@@ -179,7 +179,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-4 p-4 md:grid md:h-full md:grid-rows-[auto_1fr_auto]">
+    <div className="flex min-h-full flex-col gap-3 p-3 sm:gap-4 sm:p-4 lg:grid lg:h-full lg:grid-rows-[auto_1fr_auto]">
       <ParticleBackground />
       <Header
         orgName={cfg?.orgName || 'My Church'}

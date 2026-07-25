@@ -72,6 +72,20 @@
   border-radius: 999px;
 }
 
+/* Camera dock surface: a rounded card when its slots wrap onto multiple rows
+   (narrow screens), morphing into a full pill once they fit on one row (lg+). */
+.glass-dock {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 26px;
+}
+@media (min-width: 1024px) {
+  .glass-dock {
+    border-radius: 999px;
+  }
+}
+
 /* Shared glass card surface used by song rows */
 .glass-card {
   background: linear-gradient(150deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));

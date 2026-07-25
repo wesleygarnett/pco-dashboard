@@ -30,9 +30,10 @@ body {
   overflow: hidden;
 }
 
-/* The no-scroll fixed-viewport layout is for wall/TV displays; on narrow
-   screens content wraps taller than the viewport, so let the page scroll. */
-@media (max-width: 767px) {
+/* The no-scroll fixed-viewport layout is for wall/TV/desktop displays (lg+);
+   below that — phones, tablets, and small/portrait windows — content wraps
+   taller than the viewport, so let the page scroll instead of clipping. */
+@media (max-width: 1023px) {
   html,
   body,
   #root {

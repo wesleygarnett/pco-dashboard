@@ -7,11 +7,11 @@ export default function PositionsEditor({ positions, updatePosition, addPosition
       </div>
       <div className="flex flex-col gap-2">
         {positions.map((pos, i) => (
-          <div key={i} className="flex items-center gap-3">
+          <div key={i} className="flex flex-wrap items-center gap-2 sm:gap-3">
             <input
               type="text"
               placeholder="Position name (as it appears in Planning Center)"
-              className="flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[14px] text-[var(--text)] outline-none"
+              className="min-w-0 flex-1 basis-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[14px] text-[var(--text)] outline-none sm:basis-0"
               value={pos.label}
               onChange={(e) => updatePosition(i, { label: e.target.value })}
             />
