@@ -64,6 +64,59 @@ body {
   }
 }
 
+/* Header bar layout.
+
+   Below lg this is a 2-column grid: the logo occupies a fixed gutter, and the
+   org name, plan picker, and service-time row all share the content column, so
+   their left edges line up instead of the times starting back at the card edge.
+
+   At lg it collapses to the single-row pill — logo, brand, then the controls
+   pushed right. */
+.header-bar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 12px;
+}
+.header-logo {
+  grid-column: 1;
+  grid-row: 1;
+}
+.header-brand {
+  grid-column: 2;
+  grid-row: 1;
+}
+/* Refresh/settings sit in the top-right corner rather than in the content
+   column, so the service times get the full column width instead of pushing
+   the buttons onto a third row. */
+.header-actions {
+  grid-column: 3;
+  grid-row: 1;
+}
+.header-controls {
+  grid-column: 2 / -1;
+  grid-row: 2;
+}
+
+@media (min-width: 1024px) {
+  .header-bar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    column-gap: clamp(10px, 1.2vw, 16px);
+    row-gap: 8px;
+  }
+  .header-controls {
+    margin-left: auto;
+  }
+  /* DOM order puts the actions before the times; on one row they belong last. */
+  .header-actions {
+    order: 1;
+  }
+}
+
 /* Song card layout.
 
    Below lg the card is a 3-column grid: a fixed gutter for the track-number
