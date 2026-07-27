@@ -47,14 +47,24 @@ Two run modes share the same backend:
 
 **Frontend is a Vite + React app.** Source lives in `src/` (components, state, API client, lib helpers — see below). `public/` is a **generated build artifact** (git-ignored) produced by `npm run build` — never hand-edit files in `public/`; edit `src/` and rebuild. Both Electron and the Express static server just serve whatever is currently in `public/`, so a build must run before either will reflect frontend changes.
 
+### Responsive layout
+The **`lg` breakpoint (1024px) is the layout contract** — the app has two distinct layouts, not one fluid one. Read this before changing anything visual.
+- **Below `lg`** (phones, tablets, small windows): the page scrolls, content stacks, and song cards are uniform height. **At/above `lg`**: the fixed no-scroll wall/TV layout — `lg:grid lg:h-full lg:grid-rows-[auto_1fr_auto]` on the `App.jsx` root, with everything sized to fill the viewport exactly.
+- The threshold is encoded in three places that must move together: `src/index.css` (`@media (max-width: 1023px)` for the scroll/height reset, `@media (min-width: 1024px)` for the card row), `src/ui/theme.css` (the `.glass-bar`/`.glass-dock` radius swaps), and the `lg:` Tailwind utilities throughout `src/components/`.
+- **The header follows the same pattern** (`.header-*` in `src/index.css`): below `lg` a 2-column grid puts the logo in a fixed gutter while the org name, plan picker, and service-time row share the content column, so their left edges line up; refresh/settings sit in a third column at top-right rather than in the content column, which keeps the header to two rows. At `lg` it's one flex row, with `.header-actions` given `order: 1` so DOM order (actions before times) still renders times-then-buttons.
+- **Song cards are five flat siblings positioned by CSS** (`.song-card-*` in `src/index.css`), not nested wrappers: number chip, title, avatar, tag row, note. Below `lg` they're placed on a 3-column grid (fixed number gutter / content / avatar); at `lg` the same DOM becomes one flex row in source order. Tags and the note live in the *title's* grid column, so they align to it automatically — don't reintroduce hand-computed indent padding to fake this.
+- **Mobile card geometry is deliberately uniform**, and four things maintain it together: the title clamps to 2 lines, the tag row is a single non-wrapping line capped at 2 tags (overflow becomes a `+N` chip, full text in the `title` attribute), `SongList` equalizes rows with `grid-auto-rows: 1fr`, and the card body is top-aligned below `lg` so the avatar keeps a constant corner offset. Changing any one of them breaks the equal-height guarantee.
+- **Gotcha — `display` conflicts.** Line clamping, `inline`/`block`, and `hidden` all resolve the same `display` property, so competing Tailwind variants are decided by stylesheet order rather than intent. That's why title/artist display lives in CSS (`.song-card-title-main`, `.song-card-artist`) instead of `line-clamp-*`/`lg:inline` utilities, and why overflow tags are hidden via a wrapper element rather than per-`Badge` classes — `Badge`'s own `inline-block` wins otherwise.
+- `.app-shell` (on the `App.jsx` root) carries the `env(safe-area-inset-*)` padding for notch/home-indicator clearance; it only does anything because `index.html` sets `viewport-fit=cover`.
+
 ### Component library (`src/ui/`)
-- **`src/ui/` is a standalone, presentational component library** (TypeScript `.tsx`): `Avatar`, `Button` (`variant` prop), `Badge`, `Field` (+ `controlClass`), `StatusLine`, `Overlay`, plus the terracotta design tokens in `src/ui/theme.css`. Pure, prop-driven, no app/PCO coupling — the app imports these via `import { … } from '../ui'`.
+- **`src/ui/` is a standalone, presentational component library** (TypeScript `.tsx`): `Avatar`, `Button` (`variant` prop), `Badge`, `Field` (+ `controlClass`), `StatusLine`, `Overlay`, plus the night-mode design tokens and shared glass surfaces in `src/ui/theme.css`. Pure, prop-driven, no app/PCO coupling — the app imports these via `import { … } from '../ui'`.
 - `src/ui/index.ts` — CSS-free barrel the app imports (the app owns its own Tailwind entry). `src/ui/lib.ts` — library build entry that also pulls `ui.css`.
 - `npm run build:lib` (config: `vite.lib.config.js`) compiles it to `dist-ui/ui.js` + `dist-ui/ui.css` (tokens + Tailwind utilities) + per-component `.d.ts`; declared in `package.json` `exports`. `dist-ui/` is git-ignored. This build is separate from the app build and not part of packaging/deploy.
 - Smart, data-coupled components (`Header`, `SongList`, `CameraTeam`, `SettingsModal`, `SetupWizard`) stay in `src/components/` and compose the `src/ui` primitives.
 
 ### Design system sync (`.design-sync/`)
-- `src/ui` is synced to a claude.ai/design project via the `/design-sync` skill so designs there can build with the real terracotta components. Config lives in `.design-sync/config.json` (`shape: "package"`, `buildCmd: "npm run build:lib"`, `cssEntry: "./dist-ui/ui.css"`) — re-running the sync is deterministic from this file.
+- `src/ui` is synced to a claude.ai/design project via the `/design-sync` skill so designs there can build with the real components. Config lives in `.design-sync/config.json` (`shape: "package"`, `buildCmd: "npm run build:lib"`, `cssEntry: "./dist-ui/ui.css"`) — re-running the sync is deterministic from this file.
 - `.design-sync/conventions.md` — prepended to the synced README; teaches the design agent this library's conventions (dark-theme-only, no `ThemeProvider`, Tailwind + `var(--token)` styling idiom). `.design-sync/NOTES.md` — repo-specific gotchas for whoever re-runs the sync (e.g. why `package.json` needs a top-level `types` field, the `Overlay` fixed-position preview quirk).
 - `.design-sync/previews/*.tsx` — hand-authored example compositions for each library component, used to generate preview cards; edit these directly, they're never regenerated.
 - `.ds-sync/` and `ds-bundle/` are regenerated scratch/output from running the sync — git-ignored, not source.
@@ -66,7 +76,8 @@ Two run modes share the same backend:
 - `src/api/client.js` — thin fetch wrapper around the `/api/*` routes below
 - `src/lib/` — pure helpers: `buildDashboardData.js` (transforms `/api/plan` response into song/position props), `matching.js` (team/leader matching), `format.js`, `positions.js`
 - `src/hooks/useSettingsDraft.js` — shared form state for both the setup wizard and settings modal (same draft/validation/save logic, different step framing)
-- `src/ui/theme.css` — CSS custom properties for the terracotta "Glass Panel" theme (moved here from `src/theme.css` when `src/ui/` was extracted); Tailwind (v4, CSS-first config) layers utility classes on top via `src/index.css`
+- `src/ui/theme.css` — the night-mode "Glass Panel" theme: violet primary accent, green secondary (moved here from `src/theme.css` when `src/ui/` was extracted). Contains the design tokens (canonical names are `--accent*`; `--purple*`/`--cyan*`/`--amber*` remain as deprecated aliases) and the shared glass surfaces `.glass-pill`, `.glass-bar`, `.glass-dock`, `.glass-card` (+ `.is-changed`). `.glass-bar` (header) and `.glass-dock` (camera dock) are separate from `.glass-pill` only because they swap `border-radius` at `lg` — rounded card on phones, full pill on the wall display.
+- `src/index.css` — Tailwind entry (v4, CSS-first config; layers utilities over the theme tokens) plus the **app-level** layout CSS that isn't part of the library: `.app-shell` safe-area padding and the `.song-card-*` grid (see Responsive layout above)
 
 ## Key files
 - `app-server.js` — shared Express backend (API routes, PCO proxy, settings)
@@ -80,7 +91,7 @@ Two run modes share the same backend:
 - `dist-ui/` — generated component library build output (git-ignored, not source)
 - `package.json` `exports`/`types` — the library's public contract (`.` → `dist-ui/ui.js` + `dist-ui/lib.d.ts`, `./styles.css` → `dist-ui/ui.css`); `main` (`electron-main.js`) is unrelated and only used when Electron launches the app
 - `.github/workflows/release-desktop.yml` — GitHub Actions desktop release (Windows + macOS)
-- `.design-sync/` — config, notes, and hand-authored preview stories for syncing `src/ui` to a claude.ai/design project (see Design system sync below)
+- `.design-sync/` — config, notes, and hand-authored preview stories for syncing `src/ui` to a claude.ai/design project (see Design system sync above)
 
 ## Settings API
 - `GET /api/settings` — returns settings + `hasSecret`, `envLocked`, `setupRequired`
@@ -110,7 +121,7 @@ Two run modes share the same backend:
 - Frontend build must run (`npm run build`) before packaging (`dist*`) or before `node server.js`/Electron will serve current code — CI, Electron scripts, and Render's build command must all include it
 - Don't break the Render-hosted path when changing desktop behavior
 - `signAndEditExecutable: false` for Windows builds (local packaging requirement)
-- Branch `main` is the live/released React app (v2.0.0+, tagged `v*` for desktop releases); `react` is the active development branch, currently level with `main`. The pre-React single-file `public/index.html` app is gone — `public/` is now purely a git-ignored build artifact, so any run path that serves it (`node server.js`, Electron, Render) must build first.
+- Branch `main` is the live/released React app (v2.0.0+, tagged `v*` for desktop releases) **and where work lands** — via short-lived `claude/*` branches merged by PR. Render deploys from `main`, so a merge ships. `react` is a stale legacy branch (well behind `main`) and is no longer the development branch; verify with `git ls-remote --heads origin` rather than trusting this line. The pre-React single-file `public/index.html` app is gone — `public/` is now purely a git-ignored build artifact, so any run path that serves it (`node server.js`, Electron, Render) must build first.
 
 ## GitHub Releases
 Workflow `.github/workflows/release-desktop.yml` builds Windows (NSIS) and macOS (DMG) on `v*` tag push (version comes from `package.json` — bump it before tagging). Only `.exe`/`.dmg` are published as user-facing release assets; the auto-update metadata (`.yml`/`.zip`/`.blockmap`) stays in CI artifacts and is not attached to the release.

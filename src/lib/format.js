@@ -29,8 +29,8 @@ export function fmtCountdown(ms) {
   return `${sec}s`;
 }
 
-// New theme uses a fixed 3-tone terracotta/cream/plum rotation (see design-tokens.css)
-// instead of the old 10-color hash palette.
+// The night-mode theme uses a fixed 3-tone violet/green/indigo rotation
+// (see src/ui/theme.css) instead of the old 10-color hash palette.
 const AVATAR_GRADIENTS = ['var(--avatar-grad-1)', 'var(--avatar-grad-2)', 'var(--avatar-grad-3)'];
 
 export function avatarGradient(index) {

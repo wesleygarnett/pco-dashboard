@@ -33,57 +33,69 @@ export default function Header({
   onRefresh,
   onOpenSettings,
 }) {
+  // Three children placed by .header-bar: a 2-column grid below lg (logo
+  // gutter / shared content column), one flex row at lg — see src/index.css.
   return (
-    <header className="glass-bar flex shrink-0 flex-col gap-3 p-4 lg:min-h-[clamp(52px,7.4vh,64px)] lg:flex-row lg:flex-nowrap lg:items-center lg:justify-between lg:gap-x-[clamp(12px,1.6vw,28px)] lg:gap-y-2 lg:px-[clamp(16px,2vw,30px)] lg:py-2">
-      <div className="flex min-w-0 items-center gap-3 lg:gap-x-[clamp(10px,1.2vw,16px)]">
-        {orgLogo ? (
-          <img
-            src={orgLogo}
-            alt=""
-            className="shrink-0 rounded-xl object-contain"
-            style={{
-              width: 'clamp(38px, 4.4vh, 44px)',
-              height: 'clamp(38px, 4.4vh, 44px)',
-            }}
-          />
-        ) : (
-          <div
-            className="flex shrink-0 items-center justify-center rounded-xl text-[17px] font-extrabold"
-            style={{
-              width: 'clamp(38px, 4.4vh, 44px)',
-              height: 'clamp(38px, 4.4vh, 44px)',
-              background: 'var(--avatar-grad-1)',
-              color: '#171226',
-            }}
-          >
-            {orgIcon}
-          </div>
-        )}
-        <div className="flex min-w-0 flex-col gap-0.5 lg:flex-row lg:items-center lg:gap-x-[clamp(10px,1.2vw,16px)]">
-          <h1 className="truncate text-[18px] font-bold leading-tight text-[var(--text)] lg:text-[20px]">{orgName}</h1>
-          {plans && plans.length > 1 ? (
-            <div className="relative flex max-w-full items-center">
-              <select
-                value={currentPlanId || ''}
-                onChange={(e) => onPlanChange?.(e.target.value)}
-                aria-label="Service date"
-                className="max-w-full cursor-pointer appearance-none truncate rounded-md border border-white/10 bg-white/[0.06] py-1 pl-2.5 pr-6 text-[13px] font-medium text-[var(--muted)] outline-none hover:text-[var(--text)] focus:border-[var(--accent-border)]"
-              >
-                {plans.map((p) => (
-                  <option key={p.id} value={p.id} style={{ background: 'var(--plan-option-bg)', color: 'var(--text)' }}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-2 text-[9px] text-[var(--dim)]">▼</span>
-            </div>
-          ) : (
-            <div className="min-w-0 truncate text-[13px] font-medium text-[var(--muted)]">{orgSub}</div>
-          )}
+    <header className="header-bar glass-bar shrink-0 p-4 lg:min-h-[clamp(52px,7.4vh,64px)] lg:px-[clamp(16px,2vw,30px)] lg:py-2">
+      {orgLogo ? (
+        <img
+          src={orgLogo}
+          alt=""
+          className="header-logo shrink-0 rounded-xl object-contain"
+          style={{
+            width: 'clamp(38px, 4.4vh, 44px)',
+            height: 'clamp(38px, 4.4vh, 44px)',
+          }}
+        />
+      ) : (
+        <div
+          className="header-logo flex shrink-0 items-center justify-center rounded-xl text-[17px] font-extrabold"
+          style={{
+            width: 'clamp(38px, 4.4vh, 44px)',
+            height: 'clamp(38px, 4.4vh, 44px)',
+            background: 'var(--avatar-grad-1)',
+            color: '#171226',
+          }}
+        >
+          {orgIcon}
         </div>
+      )}
+
+      <div className="header-brand flex min-w-0 flex-col gap-1 lg:flex-row lg:items-center lg:gap-x-[clamp(10px,1.2vw,16px)]">
+        <h1 className="truncate text-[18px] font-bold leading-tight text-[var(--text)] lg:text-[20px]">{orgName}</h1>
+        {/* The picker wrapper is self-start so it keeps the select's own width;
+            stretched to the column it would strand the absolute arrow. */}
+        {plans && plans.length > 1 ? (
+          <div className="relative flex max-w-full items-center self-start">
+            <select
+              value={currentPlanId || ''}
+              onChange={(e) => onPlanChange?.(e.target.value)}
+              aria-label="Service date"
+              className="max-w-full cursor-pointer appearance-none truncate rounded-md border border-white/10 bg-white/[0.06] py-1 pl-2.5 pr-5 text-[13px] font-medium text-[var(--muted)] outline-none hover:text-[var(--text)] focus:border-[var(--accent-border)]"
+            >
+              {plans.map((p) => (
+                <option key={p.id} value={p.id} style={{ background: 'var(--plan-option-bg)', color: 'var(--text)' }}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-1.5 text-[9px] text-[var(--dim)]">▼</span>
+          </div>
+        ) : (
+          <div className="min-w-0 truncate text-[13px] font-medium text-[var(--muted)]">{orgSub}</div>
+        )}
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 lg:gap-x-[clamp(12px,1.6vw,28px)]">
+      <div className="header-actions flex shrink-0 gap-1.5">
+        <button type="button" onClick={onRefresh} className={ICON_BUTTON_CLASS} aria-label="Refresh">
+          <RefreshIcon />
+        </button>
+        <button type="button" onClick={onOpenSettings} className={ICON_BUTTON_CLASS} aria-label="Settings">
+          <GearIcon />
+        </button>
+      </div>
+
+      <div className="header-controls flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 lg:gap-x-[clamp(12px,1.6vw,28px)]">
         {testMode && (
           <span className="rounded-full bg-[var(--danger-bg)] px-3 py-1 text-[12px] font-bold text-[var(--danger-bright)]">
             🔴 TEST MODE
@@ -131,14 +143,6 @@ export default function Header({
           </>
         )}
 
-        <div className="ml-auto flex shrink-0 gap-1.5 lg:ml-0">
-          <button type="button" onClick={onRefresh} className={ICON_BUTTON_CLASS} aria-label="Refresh">
-            <RefreshIcon />
-          </button>
-          <button type="button" onClick={onOpenSettings} className={ICON_BUTTON_CLASS} aria-label="Settings">
-            <GearIcon />
-          </button>
-        </div>
       </div>
     </header>
   );
