@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Overlay, StatusLine, Button } from '../ui';
-import { CredentialsFields, ServiceTypeField, DisplayFields, TeamMatchingFields } from './settings/SettingsFields.jsx';
+import {
+  CredentialsFields,
+  ServiceTypeField,
+  DisplayFields,
+  TeamMatchingFields,
+  ShotNotesFields,
+} from './settings/SettingsFields.jsx';
 import PositionsEditor from './settings/PositionsEditor.jsx';
 import { useSettingsDraft } from '../hooks/useSettingsDraft.js';
 import { saveSettings as apiSaveSettings, resetSettings as apiResetSettings } from '../api/client.js';
@@ -23,8 +29,15 @@ export default function SettingsModal({ cfg, onClose, onSaved, onSetupRequired }
 
   useEffect(() => {
     form.loadServiceTypesFromServer();
+    form.loadNoteCategoriesFromServer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Note categories are per service type, so a change invalidates the list.
+  useEffect(() => {
+    form.loadNoteCategoriesFromServer(form.draft.serviceTypeId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.draft.serviceTypeId]);
 
   async function handleSave() {
     setSaveStatus({ message: 'Saving settings…', type: '' });
@@ -86,6 +99,10 @@ export default function SettingsModal({ cfg, onClose, onSaved, onSetupRequired }
 
       <SectionCard title="Team Matching" help="Match teams by name as they appear in Planning Center.">
         <TeamMatchingFields draft={form.draft} setField={form.setField} />
+      </SectionCard>
+
+      <SectionCard title="Camera Shots" help="Per-song camera assignments, stored in Planning Center.">
+        <ShotNotesFields draft={form.draft} setField={form.setField} noteCategories={form.noteCategories} />
       </SectionCard>
 
       <SectionCard title="Team Positions">

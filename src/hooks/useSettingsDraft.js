@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { testCredentials as apiTestCredentials, getServiceTypes } from '../api/client.js';
+import { testCredentials as apiTestCredentials, getServiceTypes, getItemNoteCategories } from '../api/client.js';
 import { getDefaultVideoPositions, patternFromLabel, readCommaList } from '../lib/positions.js';
 
 function draftFromSettings(cfg) {
@@ -15,6 +15,8 @@ function draftFromSettings(cfg) {
     timezone: cfg.timezone || 'America/New_York',
     videoTeamName: cfg.videoTeamName || 'video production',
     bandTeamNamesText: (cfg.bandTeamNames || []).join(', '),
+    shotNoteCategoryId: cfg.shotNoteCategoryId || '',
+    shotVocabularyText: (cfg.shotVocabulary || []).join(', '),
     pollIntervalMs: cfg.pollIntervalMs ?? 60000,
     videoPositions: (cfg.videoPositions || getDefaultVideoPositions()).map((p) => ({
       ...p,
@@ -27,6 +29,7 @@ function draftFromSettings(cfg) {
 export function useSettingsDraft(cfg) {
   const [draft, setDraft] = useState(() => draftFromSettings(cfg));
   const [serviceTypes, setServiceTypes] = useState(null);
+  const [noteCategories, setNoteCategories] = useState(null);
   const [status, setStatus] = useState({ message: '', type: '' });
 
   const envLocked = !!cfg.envLocked;
@@ -70,6 +73,16 @@ export function useSettingsDraft(cfg) {
     return types;
   }
 
+  // Item note categories can't be created through the API, so this only ever
+  // lists what the org already has. An empty array is a meaningful answer (the
+  // UI explains what to create) and is distinct from null (not loaded yet).
+  async function loadNoteCategoriesFromServer(serviceTypeId = draft.serviceTypeId) {
+    if (!serviceTypeId) return null;
+    const categories = await getItemNoteCategories(serviceTypeId).catch(() => null);
+    setNoteCategories(categories?.data || []);
+    return categories;
+  }
+
   async function testConnection() {
     if (envLocked) {
       setStatus({ message: 'Credentials are managed by environment variables for this build.', type: '' });
@@ -103,6 +116,12 @@ export function useSettingsDraft(cfg) {
       timezone: draft.timezone,
       videoTeamName: draft.videoTeamName.trim(),
       bandTeamNames: readCommaList(draft.bandTeamNamesText),
+      shotNoteCategoryId: draft.shotNoteCategoryId,
+      shotNoteCategoryName:
+        noteCategories?.find((c) => c.id === draft.shotNoteCategoryId)?.attributes?.name ||
+        cfg.shotNoteCategoryName ||
+        '',
+      shotVocabulary: readCommaList(draft.shotVocabularyText),
       videoPositions: draft.videoPositions
         .map((p) => ({ label: p.label.trim(), pattern: p.pattern, isDir: !!p.isDir }))
         .filter((p) => p.label),
@@ -118,6 +137,8 @@ export function useSettingsDraft(cfg) {
     setField,
     serviceTypes,
     setServiceTypes,
+    noteCategories,
+    loadNoteCategoriesFromServer,
     status,
     setStatus,
     envLocked,

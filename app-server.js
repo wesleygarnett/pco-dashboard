@@ -45,6 +45,15 @@ const DEFAULT_SETTINGS = {
   videoTeamName: 'video production',
   bandTeamNames: ['band', 'vocal'],
   pollIntervalMs: 60000,
+  // Which PCO item-note category holds per-song camera assignments. Empty means
+  // the feature is off. Categories can't be created through the API, so this is
+  // picked from the ones the org already has.
+  shotNoteCategoryId: '',
+  shotNoteCategoryName: '',
+  // Shot vocabulary is deliberately per-church: "if a director says 'push-in'
+  // and the camera operator doesn't know what that means, you will not get what
+  // you want." These are offered as one-click chips in the shot editor.
+  shotVocabulary: ['Wide', 'Mid', 'Tight', 'Detail', 'Roaming', 'Locked', 'Push in'],
   videoPositions: [
     { label: 'Main Director', pattern: 'main\\s*director', isDir: true },
     { label: 'Broadcast Director', pattern: 'broadcast\\s*director', isDir: true },
@@ -91,6 +100,18 @@ function sanitizeStringArray(value, fallback) {
   return value
     .map(v => sanitizeMatcherString(v))
     .filter(Boolean);
+}
+
+// Like sanitizeStringArray but preserves case — these are shown to the user
+// verbatim rather than used for matching.
+const MAX_VOCABULARY = 24;
+const MAX_VOCABULARY_TERM = 24;
+function sanitizeLabelArray(value, fallback) {
+  if (!Array.isArray(value)) return [...fallback];
+  return value
+    .map(v => sanitizeString(v).trim().slice(0, MAX_VOCABULARY_TERM))
+    .filter(Boolean)
+    .slice(0, MAX_VOCABULARY);
 }
 
 function sanitizePollInterval(value, fallback) {
@@ -155,6 +176,9 @@ function normalizeSettings(input = {}) {
     videoTeamName: sanitizeMatcherString(input.videoTeamName, defaults.videoTeamName) || defaults.videoTeamName,
     bandTeamNames: sanitizeStringArray(input.bandTeamNames, defaults.bandTeamNames),
     pollIntervalMs: sanitizePollInterval(input.pollIntervalMs, defaults.pollIntervalMs),
+    shotNoteCategoryId: sanitizeString(input.shotNoteCategoryId, defaults.shotNoteCategoryId).trim(),
+    shotNoteCategoryName: sanitizeString(input.shotNoteCategoryName, defaults.shotNoteCategoryName).trim(),
+    shotVocabulary: sanitizeLabelArray(input.shotVocabulary, defaults.shotVocabulary),
     videoPositions: sanitizeVideoPositions(input.videoPositions, defaults.videoPositions),
   };
 
@@ -271,6 +295,26 @@ function createServer(options = {}) {
     return res.json();
   }
 
+  async function pcoWrite(method, endpoint, body, credentials = runtime.creds) {
+    const auth = buildAuthHeader(credentials);
+    if (!auth) {
+      throw new Error('Planning Center credentials have not been configured yet.');
+    }
+
+    const res = await fetch(`${PCO_BASE}${endpoint}`, {
+      method,
+      headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(PCO_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`PCO ${res.status}: ${text}`);
+    }
+    // PCO returns 204 with no body on some writes.
+    return res.status === 204 ? null : res.json();
+  }
+
   // Backstop against a malformed `links.next` cycle; PCO caps per_page at 100,
   // so this still covers 5,000 records.
   const MAX_PAGES = 50;
@@ -302,6 +346,7 @@ function createServer(options = {}) {
       ...incoming,
       bandTeamNames: incoming.bandTeamNames ?? existing.bandTeamNames,
       videoPositions: incoming.videoPositions ?? existing.videoPositions,
+      shotVocabulary: incoming.shotVocabulary ?? existing.shotVocabulary,
     };
 
     if (runtime.envLocked) {
@@ -420,7 +465,9 @@ function createServer(options = {}) {
       const st = encodeURIComponent(serviceTypeId);
       const pid = encodeURIComponent(planId);
       const [items, teamMembers, planTimes, plan] = await Promise.all([
-        pcoAll(`/services/v2/service_types/${st}/plans/${pid}/items?include=song,arrangement&per_page=100`),
+        // item_notes rides along on the include that was already being made, so
+        // the shot plan costs no additional request.
+        pcoAll(`/services/v2/service_types/${st}/plans/${pid}/items?include=song,arrangement,item_notes&per_page=100`),
         pcoAll(`/services/v2/service_types/${st}/plans/${pid}/team_members?include=person,team&per_page=100`),
         pcoAll(`/services/v2/service_types/${st}/plans/${pid}/plan_times?per_page=100`),
         pco(`/services/v2/service_types/${st}/plans/${pid}`),
@@ -430,6 +477,72 @@ function createServer(options = {}) {
     } catch (error) {
       console.error('[plan]', error.message);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Item note categories are read-only through the PCO API — they have to be
+  // created once in Planning Center itself. This just lists what exists so the
+  // settings UI can offer a real choice instead of asking for an opaque id.
+  app.get('/api/item-note-categories', async (req, res) => {
+    try {
+      const { serviceTypeId } = req.query;
+      if (!serviceTypeId) return res.status(400).json({ error: 'serviceTypeId required' });
+      const st = encodeURIComponent(serviceTypeId);
+      res.json(await pcoAll(`/services/v2/service_types/${st}/item_note_categories?per_page=100`));
+    } catch (error) {
+      console.error('[item-note-categories]', error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create-or-update the shot note for one item. A category holds at most one
+  // note per item, and item_note_category_id can only be set on create — so an
+  // existing note is PATCHed in place and never recategorized.
+  app.put('/api/item-note', async (req, res) => {
+    try {
+      const serviceTypeId = sanitizeString(req.query.serviceTypeId).trim();
+      const planId = sanitizeString(req.query.planId).trim();
+      const itemId = sanitizeString(req.query.itemId).trim();
+      const categoryId = sanitizeString(req.body?.categoryId).trim();
+      const content = sanitizeString(req.body?.content);
+      const noteId = sanitizeString(req.body?.noteId).trim();
+
+      if (!serviceTypeId || !planId || !itemId) {
+        return res.status(400).json({ error: 'serviceTypeId, planId and itemId are required.' });
+      }
+      if (!categoryId) {
+        return res.status(400).json({ error: 'No shot note category is configured.' });
+      }
+
+      const st = encodeURIComponent(serviceTypeId);
+      const pid = encodeURIComponent(planId);
+      const iid = encodeURIComponent(itemId);
+      const base = `/services/v2/service_types/${st}/plans/${pid}/items/${iid}/item_notes`;
+
+      const saved = noteId
+        ? await pcoWrite('PATCH', `${base}/${encodeURIComponent(noteId)}`, {
+            data: { type: 'ItemNote', id: noteId, attributes: { content } },
+          })
+        : await pcoWrite('POST', base, {
+            data: {
+              type: 'ItemNote',
+              attributes: { content },
+              relationships: { item_note_category: { data: { type: 'ItemNoteCategory', id: categoryId } } },
+            },
+          });
+
+      res.json({ ok: true, note: saved?.data || null });
+    } catch (error) {
+      console.error('[item-note]', error.message);
+      // A Personal Access Token inherits its creator's permissions, so a
+      // read-only PCO account fails here rather than at connection time.
+      const forbidden = /PCO 40[13]/.test(error.message);
+      res.status(forbidden ? 403 : 500).json({
+        ok: false,
+        error: forbidden
+          ? 'Your Planning Center account does not have permission to edit this plan.'
+          : error.message,
+      });
     }
   });
 
