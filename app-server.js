@@ -304,7 +304,8 @@ function createServer(options = {}) {
     const res = await fetch(`${PCO_BASE}${endpoint}`, {
       method,
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      // DELETE carries no body.
+      body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.timeout(PCO_TIMEOUT_MS),
     });
     if (!res.ok) {
@@ -536,6 +537,15 @@ function createServer(options = {}) {
       const iid = encodeURIComponent(itemId);
       const base = `/services/v2/service_types/${st}/plans/${pid}/items/${iid}/item_notes`;
 
+      // Clearing the last shot leaves nothing to save, and PCO rejects a blank
+      // note body with a 422. Delete the note instead — which is also what the
+      // user means, and it stops an empty shot note lingering on the item in
+      // Planning Center.
+      if (!content.trim()) {
+        if (noteId) await pcoWrite('DELETE', `${base}/${encodeURIComponent(noteId)}`);
+        return res.json({ ok: true, noteId: '', deleted: true });
+      }
+
       const saved = noteId
         ? await pcoWrite('PATCH', `${base}/${encodeURIComponent(noteId)}`, {
             data: { type: 'ItemNote', id: noteId, attributes: { content } },
@@ -548,7 +558,7 @@ function createServer(options = {}) {
             },
           });
 
-      res.json({ ok: true, note: saved?.data || null });
+      res.json({ ok: true, noteId: saved?.data?.id || noteId || '', deleted: false });
     } catch (error) {
       console.error('[item-note]', error.message);
       // A Personal Access Token inherits its creator's permissions, so a

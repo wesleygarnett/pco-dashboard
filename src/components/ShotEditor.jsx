@@ -36,7 +36,10 @@ export default function ShotEditor({ song, cfg, planId, onClose, onSaved }) {
         noteId: song.shotNoteId || '',
         content,
       });
-      onSaved(song.id, assignments, result.note?.id || song.shotNoteId || '');
+      // The server returns the authoritative id — empty when the note was
+      // deleted, so the next save creates a fresh one instead of PATCHing a
+      // note that no longer exists.
+      onSaved(song.id, assignments, result.noteId || '');
     } catch (e) {
       setStatus({ message: e.message, type: 'error' });
       setSaving(false);
