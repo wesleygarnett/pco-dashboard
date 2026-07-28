@@ -114,7 +114,7 @@ export default function Header({
                     : 'bg-white/[0.04] text-[var(--text)]'
               }`}
             >
-              {svc.time}
+              {svc.name || svc.time}
               {svc.isLive ? (
                 <>
                   <span className="mx-1.5 opacity-50">·</span>

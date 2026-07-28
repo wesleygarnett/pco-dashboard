@@ -29,6 +29,15 @@ function TagBadge({ tag, first }) {
   );
 }
 
+function CameraIcon({ size = 13 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M23 7l-7 5 7 5V7z" />
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+    </svg>
+  );
+}
+
 export default function SongCard({
   index,
   titleMain,
@@ -42,6 +51,13 @@ export default function SongCard({
   isChanged,
   onDismissChanged,
   animationDelay,
+  keyName,
+  bpm,
+  structure,
+  lastScheduled,
+  shots,
+  canEditShots,
+  onEditShots,
 }) {
   const [noteValue, setNoteValue] = useState(note);
   const [editingNote, setEditingNote] = useState(false);
@@ -60,10 +76,20 @@ export default function SongCard({
   const showNoteStrip = editingNote || !!noteValue;
 
   // Leader name(s) first, then the arrangement notes — one list so the mobile
-  // two-tag cap always keeps the leader visible.
+  // two-tag cap always keeps the leader visible. Song metadata goes last on
+  // purpose: it's the least urgent, and appending it leaves the mobile
+  // leader-plus-one-note geometry exactly as it was.
+  const meta = [
+    keyName && `Key ${keyName}`,
+    bpm && `${bpm} BPM`,
+    structure?.length && structure.join(' · '),
+    lastScheduled && `Last ${lastScheduled}`,
+  ].filter(Boolean);
+
   const tags = [
     ...leadPills.map((label) => ({ label, variant: 'accent' })),
     ...bubbles.map((label) => ({ label, variant: 'neutral' })),
+    ...meta.map((label) => ({ label, variant: 'neutral' })),
   ];
   const visibleTags = tags.slice(0, MOBILE_TAG_LIMIT);
   const overflowTags = tags.slice(MOBILE_TAG_LIMIT);
@@ -167,6 +193,52 @@ export default function SongCard({
           </button>
         )}
       </div>
+
+      {/* Camera assignments sit in their own full-width row rather than inside
+          .song-card-body: at lg the body is a single non-wrapping flex row where
+          the tags are the only shrinkable child, so anything added there
+          squeezes them. */}
+      {canEditShots && (shots.length > 0 ? (
+        <div
+          className="flex w-full flex-wrap items-center gap-x-2 gap-y-1.5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="shrink-0 text-[var(--accent)]" aria-hidden="true">
+            <CameraIcon size={14} />
+          </span>
+          {shots.map((entry) => (
+            <span
+              key={entry.label}
+              className="rounded-full border border-[var(--accent-border-soft)] bg-[var(--accent-bg)] px-2.5 py-0.5 text-[12px] font-semibold text-[var(--text)]"
+            >
+              <span className="text-[var(--accent)]">{entry.label}</span>
+              <span className="mx-1 opacity-40">·</span>
+              {entry.shot}
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={onEditShots}
+            aria-label={`Edit camera shots for ${titleMain}`}
+            className="ml-auto flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold text-[var(--dim)] hover:text-[var(--muted)]"
+          >
+            <PencilIcon size={12} />
+            Edit
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditShots?.();
+          }}
+          className="flex w-fit cursor-pointer items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[13px] font-semibold text-[var(--dim)] hover:border-white/20 hover:text-[var(--muted)] lg:text-[12px]"
+        >
+          <CameraIcon />
+          Add camera shots
+        </button>
+      ))}
 
       {showNoteStrip && (
         <div

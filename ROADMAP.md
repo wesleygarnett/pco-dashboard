@@ -31,7 +31,27 @@ This is a menu, not a single change, ordered by value-per-effort.
 
 ## Status
 
-**Tier 0 is done.** Tiers 1–4 are open.
+**Tier 0 is done.** Tiers 1–4 are open, minus the pieces listed under "Shipped since" below.
+
+### Shipped since: camera shots + cheap wins
+
+The app's biggest gap wasn't in this document at all — it already knew the songs and it already
+knew the cameras, and had never connected the two. Per-song, per-camera **shot assignments** now
+exist, stored as Planning Center item notes so the plan is visible to the whole team rather than
+trapped on one device. See "Camera shots" in `CLAUDE.md`.
+
+That shipped alongside five additions that each read a field already arriving in `/api/plan`:
+
+| Item | Effect |
+|---|---|
+| 1.6 (part) | Song key, arrangement BPM, and section structure on the card; every `Arrangement` object was previously discarded |
+| 1.6 (part) | "Last done 6 weeks ago" from `Song.last_scheduled_at` |
+| 1.4 (part) | Dock shows five states, not three: confirmed / unconfirmed / **notified but never opened** / declined-with-reason / empty |
+| new | **"N scheduled people aren't shown"** — members matching no position pattern used to vanish silently |
+| new | Named service times (`plan_times.name`), and the live window now uses real `ends_at` instead of a flat hour |
+
+Still open in those items: `needed_positions` for a true unfilled state (1.4), rehearsal times
+and third-plus service times (1.6).
 
 One Tier 0 item was deliberately left open: **hosted-mode authentication (0.2)**. The Render
 deployment's settings routes remain unauthenticated; only the SSRF half of the photo-proxy

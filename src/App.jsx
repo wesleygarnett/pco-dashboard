@@ -9,10 +9,23 @@ import ErrorBoundary from './components/ErrorBoundary.jsx';
 import SetupWizard from './components/SetupWizard.jsx';
 import SettingsModal from './components/SettingsModal.jsx';
 import { getSettings, getPlans, getPlan } from './api/client.js';
+import ShotEditor from './components/ShotEditor.jsx';
 import { buildDashboardData, LIVE_WINDOW_MS } from './lib/buildDashboardData.js';
+import { shotList } from './lib/shotNotes.js';
 import { fmtDate, fmtTime, fmtCountdown } from './lib/format.js';
 
 const TEST_MODE = new URLSearchParams(location.search).has('test');
+
+// A service counts as live from its start until its real end time when PCO
+// supplies one, falling back to the flat one-hour window otherwise.
+function isLiveAt(serviceTime, at) {
+  const diff = serviceTime.startsAt - at;
+  if (diff > 0) return false;
+  const window = serviceTime.endsAt
+    ? Math.max(serviceTime.endsAt - serviceTime.startsAt, 0)
+    : LIVE_WINDOW_MS;
+  return diff > -window;
+}
 
 export default function App() {
   const [cfg, setCfg] = useState(null);
@@ -24,6 +37,7 @@ export default function App() {
   const [now, setNow] = useState(Date.now());
   const [changedSongIds, setChangedSongIds] = useState(new Set());
   const [showSettings, setShowSettings] = useState(false);
+  const [editingShotsFor, setEditingShotsFor] = useState(null);
 
   const songTitlesRef = useRef({});
   const cfgRef = useRef(null);
@@ -39,10 +53,7 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  const anyLive = (dashboard?.serviceTimes || []).some((t) => {
-    const diff = t - now;
-    return diff <= 0 && diff > -LIVE_WINDOW_MS;
-  });
+  const anyLive = (dashboard?.serviceTimes || []).some((t) => isLiveAt(t, now));
 
   // Background polling — only while a service is live (or ?test is set)
   useEffect(() => {
@@ -117,10 +128,7 @@ export default function App() {
     const data = buildDashboardData(rawPlanData, settings, planId);
 
     if (isPoll) {
-      const isLiveNow = data.serviceTimes.some((t) => {
-        const diff = t - Date.now();
-        return diff <= 0 && diff > -LIVE_WINDOW_MS;
-      });
+      const isLiveNow = data.serviceTimes.some((t) => isLiveAt(t, Date.now()));
       if (isLiveNow || TEST_MODE) {
         const newlyChanged = [];
         data.songs.forEach((song) => {
@@ -138,14 +146,14 @@ export default function App() {
   }
 
   const headerServiceTimes = (dashboard?.serviceTimes || []).map((t) => {
-    const diff = t - now;
-    const isLive = diff <= 0 && diff > -LIVE_WINDOW_MS;
-    const isPast = diff <= -LIVE_WINDOW_MS;
+    const diff = t.startsAt - now;
+    const isLive = isLiveAt(t, now);
     return {
-      time: fmtTime(new Date(t), cfg?.timezone),
+      time: fmtTime(new Date(t.startsAt), cfg?.timezone),
+      name: t.name,
       countdown: !isLive && diff > 0 ? fmtCountdown(diff) : null,
       isLive,
-      isPast,
+      isPast: diff <= 0 && !isLive,
     };
   });
 
@@ -153,6 +161,23 @@ export default function App() {
     ...s,
     isChanged: changedSongIds.has(s.id),
   }));
+
+  // Write the saved shots straight back into the dashboard rather than
+  // refetching the whole plan — the note we just PUT is the authority.
+  function handleShotsSaved(songId, assignments, noteId) {
+    setEditingShotsFor(null);
+    setDashboard((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        songs: prev.songs.map((s) =>
+          s.id === songId
+            ? { ...s, shotAssignments: assignments, shotNoteId: noteId, shots: shotList(assignments, cfg.videoPositions) }
+            : s,
+        ),
+      };
+    });
+  }
 
   async function applyNewSettings(settings) {
     setCfg(settings);
@@ -228,9 +253,21 @@ export default function App() {
                 return next;
               })
             }
+            canEditShots={!!cfg?.shotNoteCategoryId}
+            onEditShots={setEditingShotsFor}
           />
-          <CameraTeam positions={dashboard.positions} />
+          <CameraTeam positions={dashboard.positions} unmatched={dashboard.unmatched} />
         </ErrorBoundary>
+      )}
+
+      {editingShotsFor && cfg && currentPlanId && (
+        <ShotEditor
+          song={editingShotsFor}
+          cfg={cfg}
+          planId={currentPlanId}
+          onClose={() => setEditingShotsFor(null)}
+          onSaved={handleShotsSaved}
+        />
       )}
 
       {showSettings && cfg && (

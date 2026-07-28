@@ -1,6 +1,6 @@
 import SongCard from './SongCard.jsx';
 
-export default function SongList({ songs, onNoteChange, onDismissChanged }) {
+export default function SongList({ songs, onNoteChange, onDismissChanged, canEditShots, onEditShots }) {
   if (!songs.length) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -21,6 +21,8 @@ export default function SongList({ songs, onNoteChange, onDismissChanged }) {
           animationDelay={idx * 0.07}
           onNoteChange={onNoteChange}
           onDismissChanged={() => onDismissChanged?.(song.id)}
+          canEditShots={canEditShots}
+          onEditShots={() => onEditShots?.(song)}
           {...song}
         />
       ))}
