@@ -102,7 +102,7 @@ The **`lg` breakpoint (1024px) is the layout contract** — the app has two dist
 ### Settings behavior
 - Secret is never echoed back; API only returns `hasSecret: true/false`
 - Blank secret in settings modal = keep existing secret
-- `videoTeamName`, `bandTeamNames`, `directorKeywords` are normalized to lowercase on save — if team-matching breaks, check that saved values match actual PCO team/position names
+- `videoTeamName` and `bandTeamNames` are normalized to lowercase on save — if team-matching breaks, check that saved values match actual PCO team/position names
 - `videoPositions` patterns are validated as regex server-side before save
 - `pollIntervalMs` is whitelisted to specific values: `0` (off), `30000`, `60000`, `120000`, `300000`
 - `orgLogo` is an optional custom header logo stored inline as a data URL (the client downscales the dropped `.png`/`.jpg` to 128px before saving). Server-side `sanitizeLogo()` accepts only `data:image/(png|jpeg)` ≤500 KB and rejects anything else to empty. When set, it replaces the `orgIcon` emoji in the header.

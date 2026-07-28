@@ -8,6 +8,30 @@ try { require('dotenv').config(); } catch (_) { /* dotenv optional */ }
 
 const PCO_BASE = 'https://api.planningcenteronline.com';
 
+// Hosts the photo proxy will fetch from. Matched against the *parsed hostname*
+// (exact or subdomain), never as a substring of the whole URL — a substring
+// test lets `http://evil.com/?planningcenteronline.com` through.
+const PHOTO_HOSTS = [
+  'planningcenteronline.com',
+  'planningcenter.com',
+  'pcoassets.com',
+  'cloudfront.net',
+];
+
+// PCO Basic credentials are only ever sent to hosts Planning Center actually
+// owns. `cloudfront.net` stays fetchable because PCO serves avatars from it,
+// but anyone can stand up a CloudFront distribution, so it never sees the
+// Authorization header.
+const PHOTO_AUTH_HOSTS = PHOTO_HOSTS.filter(host => host !== 'cloudfront.net');
+
+const PHOTO_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif']);
+
+const PCO_TIMEOUT_MS = 15000;
+
+function hostAllowed(hostname, allowList) {
+  return allowList.some(host => hostname === host || hostname.endsWith(`.${host}`));
+}
+
 const DEFAULT_SETTINGS = {
   pcoAppId: '',
   pcoSecret: '',
@@ -20,7 +44,6 @@ const DEFAULT_SETTINGS = {
   timezone: 'America/New_York',
   videoTeamName: 'video production',
   bandTeamNames: ['band', 'vocal'],
-  directorKeywords: ['director', 'td', 'tech dir', 'broadcast'],
   pollIntervalMs: 60000,
   videoPositions: [
     { label: 'Main Director', pattern: 'main\\s*director', isDir: true },
@@ -76,8 +99,22 @@ function sanitizePollInterval(value, fallback) {
   return allowed.has(n) ? n : fallback;
 }
 
+// Patterns are compiled and run in the browser on every render, so an unbounded
+// or catastrophically-backtracking one is a persistent DoS of the wall display.
+// These caps keep a pathological pattern cheap rather than trying to detect one.
+const MAX_POSITIONS = 60;
+const MAX_PATTERN_LENGTH = 120;
+
+// Nested quantifiers — (a+)+, (x+x+)*, (\d{1,9}){2,} — are the shape that makes
+// backtracking blow up. Cheap to reject, and no legitimate camera pattern needs one.
+const NESTED_QUANTIFIER = /\([^)]*[+*}][^)]*\)\s*[+*{]/;
+
 function sanitizeVideoPositions(value, fallback) {
   if (!Array.isArray(value) || !value.length) return fallback.map(item => ({ ...item }));
+
+  if (value.length > MAX_POSITIONS) {
+    throw new Error(`Too many video positions (${value.length}); the maximum is ${MAX_POSITIONS}.`);
+  }
 
   const positions = [];
   value.forEach((item, idx) => {
@@ -85,6 +122,12 @@ function sanitizeVideoPositions(value, fallback) {
     const label = sanitizeString(item.label).trim().slice(0, 40);
     const pattern = sanitizeString(item.pattern).trim();
     if (!label || !pattern) return;
+    if (pattern.length > MAX_PATTERN_LENGTH) {
+      throw new Error(`Video position ${idx + 1} has a pattern longer than ${MAX_PATTERN_LENGTH} characters.`);
+    }
+    if (NESTED_QUANTIFIER.test(pattern)) {
+      throw new Error(`Video position ${idx + 1} has a pattern with nested repetition, which can hang the display.`);
+    }
     try {
       new RegExp(pattern, 'i');
     } catch (_) {
@@ -111,7 +154,6 @@ function normalizeSettings(input = {}) {
     timezone: sanitizeString(input.timezone, defaults.timezone).trim() || defaults.timezone,
     videoTeamName: sanitizeMatcherString(input.videoTeamName, defaults.videoTeamName) || defaults.videoTeamName,
     bandTeamNames: sanitizeStringArray(input.bandTeamNames, defaults.bandTeamNames),
-    directorKeywords: sanitizeStringArray(input.directorKeywords, defaults.directorKeywords),
     pollIntervalMs: sanitizePollInterval(input.pollIntervalMs, defaults.pollIntervalMs),
     videoPositions: sanitizeVideoPositions(input.videoPositions, defaults.videoPositions),
   };
@@ -136,11 +178,34 @@ function createServer(options = {}) {
     envLocked: false,
   };
 
+  let reportedCorruptSettings = false;
+
   function loadSettings() {
+    let raw;
     try {
-      const raw = fs.readFileSync(settingsPath, 'utf8');
-      return normalizeSettings(JSON.parse(raw));
+      raw = fs.readFileSync(settingsPath, 'utf8');
     } catch (_) {
+      // No settings file yet — first run.
+      return cloneDefaults();
+    }
+
+    try {
+      return normalizeSettings(JSON.parse(raw));
+    } catch (error) {
+      // Falling back to defaults silently here is how a booth loses its entire
+      // configuration without anyone noticing. Say so, and keep the bad file —
+      // but only once, since every /api/settings request lands here.
+      if (!reportedCorruptSettings) {
+        reportedCorruptSettings = true;
+        const backupPath = `${settingsPath}.corrupt`;
+        console.error(`[settings:load] ${settingsPath} is unreadable (${error.message}); using defaults.`);
+        try {
+          fs.copyFileSync(settingsPath, backupPath);
+          console.error(`[settings:load] preserved the unreadable file at ${backupPath}`);
+        } catch (backupError) {
+          console.error('[settings:load] could not preserve the unreadable file:', backupError.message);
+        }
+      }
       return cloneDefaults();
     }
   }
@@ -148,7 +213,12 @@ function createServer(options = {}) {
   function saveSettings(nextSettings) {
     const normalized = normalizeSettings(nextSettings);
     fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
-    fs.writeFileSync(settingsPath, JSON.stringify(normalized, null, 2), 'utf8');
+    // Write-then-rename: a crash mid-write leaves the previous settings intact
+    // rather than a half-written file that parses as garbage on next boot.
+    const tempPath = `${settingsPath}.tmp`;
+    fs.writeFileSync(tempPath, JSON.stringify(normalized, null, 2), 'utf8');
+    fs.renameSync(tempPath, settingsPath);
+    reportedCorruptSettings = false;
     runtime.settings = normalized;
     initCreds();
     return normalized;
@@ -188,8 +258,11 @@ function createServer(options = {}) {
     }
 
     const url = endpoint.startsWith('http') ? endpoint : `${PCO_BASE}${endpoint}`;
+    // node-fetch v2 has no default timeout, so without this a hung PCO
+    // connection pins an Express handler indefinitely.
     const res = await fetch(url, {
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(PCO_TIMEOUT_MS),
     });
     if (!res.ok) {
       const text = await res.text();
@@ -197,6 +270,10 @@ function createServer(options = {}) {
     }
     return res.json();
   }
+
+  // Backstop against a malformed `links.next` cycle; PCO caps per_page at 100,
+  // so this still covers 5,000 records.
+  const MAX_PAGES = 50;
 
   async function pcoAll(endpoint, credentials = runtime.creds) {
     let url = endpoint.startsWith('http') ? endpoint : `${PCO_BASE}${endpoint}`;
@@ -208,8 +285,11 @@ function createServer(options = {}) {
       const page = await pco(url, credentials);
       allData.push(...(page.data || []));
       allIncluded.push(...(page.included || []));
-      console.log(`[pcoAll] page ${pageNum}: +${(page.data || []).length} items (total so far: ${allData.length})`);
       url = page.links?.next || null;
+      if (url && pageNum >= MAX_PAGES) {
+        console.warn(`[pcoAll] stopped at ${MAX_PAGES} pages (${allData.length} items); results may be truncated.`);
+        break;
+      }
       pageNum++;
     }
 
@@ -221,7 +301,6 @@ function createServer(options = {}) {
       ...existing,
       ...incoming,
       bandTeamNames: incoming.bandTeamNames ?? existing.bandTeamNames,
-      directorKeywords: incoming.directorKeywords ?? existing.directorKeywords,
       videoPositions: incoming.videoPositions ?? existing.videoPositions,
     };
 
@@ -266,7 +345,7 @@ function createServer(options = {}) {
     }
 
     try {
-      const serviceTypes = await pco('/services/v2/service_types?per_page=100', { appId, secret });
+      const serviceTypes = await pcoAll('/services/v2/service_types?per_page=100', { appId, secret });
       res.json({ ok: true, serviceTypes });
     } catch (error) {
       console.error('[settings:test-credentials]', error.message);
@@ -308,7 +387,7 @@ function createServer(options = {}) {
 
   app.get('/api/service-types', async (req, res) => {
     try {
-      res.json(await pco('/services/v2/service_types?per_page=100'));
+      res.json(await pcoAll('/services/v2/service_types?per_page=100'));
     } catch (error) {
       console.error('[service-types]', error.message);
       res.status(500).json({ error: error.message });
@@ -319,8 +398,9 @@ function createServer(options = {}) {
     try {
       const { serviceTypeId } = req.query;
       if (!serviceTypeId) return res.status(400).json({ error: 'serviceTypeId required' });
+      const st = encodeURIComponent(serviceTypeId);
       res.json(await pco(
-        `/services/v2/service_types/${serviceTypeId}/plans?filter=future&order=sort_date&per_page=8`
+        `/services/v2/service_types/${st}/plans?filter=future&order=sort_date&per_page=8`
       ));
     } catch (error) {
       console.error('[plans]', error.message);
@@ -335,14 +415,17 @@ function createServer(options = {}) {
         return res.status(400).json({ error: 'serviceTypeId and planId required' });
       }
 
+      // Every collection here paginates — using plain pco() on any of them
+      // silently drops everything past the first page.
+      const st = encodeURIComponent(serviceTypeId);
+      const pid = encodeURIComponent(planId);
       const [items, teamMembers, planTimes, plan] = await Promise.all([
-        pco(`/services/v2/service_types/${serviceTypeId}/plans/${planId}/items?include=song,arrangement&per_page=100`),
-        pcoAll(`/services/v2/service_types/${serviceTypeId}/plans/${planId}/team_members?include=person,team&per_page=100`),
-        pco(`/services/v2/service_types/${serviceTypeId}/plans/${planId}/plan_times`),
-        pco(`/services/v2/service_types/${serviceTypeId}/plans/${planId}`),
+        pcoAll(`/services/v2/service_types/${st}/plans/${pid}/items?include=song,arrangement&per_page=100`),
+        pcoAll(`/services/v2/service_types/${st}/plans/${pid}/team_members?include=person,team&per_page=100`),
+        pcoAll(`/services/v2/service_types/${st}/plans/${pid}/plan_times?per_page=100`),
+        pco(`/services/v2/service_types/${st}/plans/${pid}`),
       ]);
 
-      console.log(`[plan] Total team members fetched: ${teamMembers.data.length}`);
       res.json({ items, teamMembers, planTimes, plan });
     } catch (error) {
       console.error('[plan]', error.message);
@@ -353,20 +436,56 @@ function createServer(options = {}) {
   app.get('/api/photo-proxy', async (req, res) => {
     try {
       const { url } = req.query;
-      if (!url) return res.status(400).send('No URL');
+      if (!url || typeof url !== 'string') return res.status(400).send('No URL');
 
-      const allowed = ['planningcenteronline.com', 'pcoassets.com', 'people.planningcenter', 'cloudfront.net'];
-      if (!allowed.some(domain => String(url).includes(domain))) {
+      let target;
+      try {
+        target = new URL(url);
+      } catch (_) {
+        return res.status(400).send('Invalid URL');
+      }
+
+      // https only — an http target would send the credentials below in the clear.
+      if (target.protocol !== 'https:' || !hostAllowed(target.hostname, PHOTO_HOSTS)) {
         return res.status(403).send('Forbidden');
       }
 
-      const auth = buildAuthHeader(runtime.creds);
-      const response = await fetch(url, auth ? { headers: { 'Authorization': auth } } : undefined);
+      const auth = hostAllowed(target.hostname, PHOTO_AUTH_HOSTS) ? buildAuthHeader(runtime.creds) : '';
+      // Redirects are followed because PCO legitimately redirects avatars to a
+      // CDN. node-fetch 2.7 drops the Authorization header on any cross-host
+      // hop, so the credentials can't ride along; the final URL is re-checked
+      // below so a redirect still can't walk off the allowlist.
+      const response = await fetch(target.toString(), {
+        headers: auth ? { 'Authorization': auth } : undefined,
+        signal: AbortSignal.timeout(PCO_TIMEOUT_MS),
+        redirect: 'follow',
+        follow: 5,
+      });
+
+      if (response.url) {
+        let finalHost = '';
+        try {
+          finalHost = new URL(response.url).hostname;
+        } catch (_) { /* keep finalHost empty so the check below fails closed */ }
+        if (!hostAllowed(finalHost, PHOTO_HOSTS)) return res.status(403).send('Forbidden');
+      }
+
       if (!response.ok) return res.status(response.status).send('Photo unavailable');
 
-      const contentType = response.headers.get('content-type') || 'image/jpeg';
+      // Never echo an unvalidated upstream type — that would let this route
+      // serve HTML from the app's own origin.
+      const contentType = (response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+      if (!PHOTO_CONTENT_TYPES.has(contentType)) {
+        return res.status(415).send('Not an image');
+      }
+
       res.set('Content-Type', contentType);
+      res.set('X-Content-Type-Options', 'nosniff');
       res.set('Cache-Control', 'public, max-age=3600');
+      response.body.on('error', error => {
+        console.error('[photo-proxy:stream]', error.message);
+        res.destroy();
+      });
       response.body.pipe(res);
     } catch (error) {
       console.error('[photo-proxy]', error.message);
