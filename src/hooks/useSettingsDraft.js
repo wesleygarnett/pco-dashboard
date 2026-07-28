@@ -15,7 +15,6 @@ function draftFromSettings(cfg) {
     timezone: cfg.timezone || 'America/New_York',
     videoTeamName: cfg.videoTeamName || 'video production',
     bandTeamNamesText: (cfg.bandTeamNames || []).join(', '),
-    directorKeywordsText: (cfg.directorKeywords || []).join(', '),
     pollIntervalMs: cfg.pollIntervalMs ?? 60000,
     videoPositions: (cfg.videoPositions || getDefaultVideoPositions()).map((p) => ({
       ...p,
@@ -104,7 +103,6 @@ export function useSettingsDraft(cfg) {
       timezone: draft.timezone,
       videoTeamName: draft.videoTeamName.trim(),
       bandTeamNames: readCommaList(draft.bandTeamNamesText),
-      directorKeywords: readCommaList(draft.directorKeywordsText),
       videoPositions: draft.videoPositions
         .map((p) => ({ label: p.label.trim(), pattern: p.pattern, isDir: !!p.isDir }))
         .filter((p) => p.label),

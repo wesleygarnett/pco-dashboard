@@ -58,30 +58,6 @@ export function matchLeaders(leaderNames, bandMembers) {
   });
 }
 
-export function camNum(s) {
-  const m = s.match(/(?:camera|cam)\s*(\d+)/);
-  return m ? parseInt(m[1]) : null;
-}
-
-export function sortVideoTeam(members, directorKeywords) {
-  return [...members].sort((a, b) => {
-    const ap = (a.attributes.team_position_name || '').toLowerCase();
-    const bp = (b.attributes.team_position_name || '').toLowerCase();
-    const aDir = directorKeywords.some((k) => ap.includes(k.toLowerCase()));
-    const bDir = directorKeywords.some((k) => bp.includes(k.toLowerCase()));
-    if (aDir && !bDir) return -1;
-    if (!aDir && bDir) return 1;
-    const aPTZ = /ptz/.test(ap);
-    const bPTZ = /ptz/.test(bp);
-    if (!aPTZ && bPTZ) return -1;
-    if (aPTZ && !bPTZ) return 1;
-    const an = camNum(ap);
-    const bn = camNum(bp);
-    if (an !== null && bn !== null) return an - bn;
-    return ap.localeCompare(bp);
-  });
-}
-
 export function getPhoto(member, personMap) {
   let p = member.attributes.photo_thumbnail || '';
   if (!p || /generic|placeholder|missing/i.test(p)) {

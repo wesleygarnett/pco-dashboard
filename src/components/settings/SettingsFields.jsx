@@ -210,14 +210,6 @@ export function TeamMatchingFields({ draft, setField }) {
           onChange={(e) => setField('bandTeamNamesText', e.target.value)}
         />
       </Field>
-      <Field label="Highlighted Member Keywords" fullSpan>
-        <input
-          type="text"
-          className={inputClass}
-          value={draft.directorKeywordsText}
-          onChange={(e) => setField('directorKeywordsText', e.target.value)}
-        />
-      </Field>
     </div>
   );
 }

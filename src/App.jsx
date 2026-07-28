@@ -5,6 +5,7 @@ import SongList from './components/SongList.jsx';
 import CameraTeam from './components/CameraTeam.jsx';
 import LoadingState from './components/LoadingState.jsx';
 import ErrorState from './components/ErrorState.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import SetupWizard from './components/SetupWizard.jsx';
 import SettingsModal from './components/SettingsModal.jsx';
 import { getSettings, getPlans, getPlan } from './api/client.js';
@@ -100,9 +101,13 @@ export default function App() {
     setStatus({ state: 'loading', message: 'Loading service…' });
     try {
       const d = await getPlan(settings.serviceTypeId, planId);
+      // Switching plans quickly can land an older response after a newer one —
+      // the poller already guards for this, and so must the primary path.
+      if (planIdRef.current !== planId) return;
       applyDashboardData(d, settings, planId, { isPoll: false });
       setStatus({ state: 'ready' });
     } catch (e) {
+      if (planIdRef.current !== planId) return;
       console.error(e);
       setStatus({ state: 'error', message: e.message });
     }
@@ -159,7 +164,14 @@ export default function App() {
     setDashboard(null);
     setChangedSongIds(new Set());
     songTitlesRef.current = {};
-    await loadPlans(settings);
+    try {
+      await loadPlans(settings);
+    } catch (e) {
+      // Without this the rejection escapes and the app sits on the spinner
+      // forever, with no error state and no way back.
+      console.error(e);
+      setStatus({ state: 'error', message: e.message });
+    }
   }
 
   function handleSetupComplete(settings) {
@@ -203,7 +215,9 @@ export default function App() {
       ) : status.state === 'error' ? (
         <ErrorState message={status.message} onRetry={boot} />
       ) : (
-        <>
+        // Scoped inside the header so a render fault in the song list or camera
+        // dock still leaves refresh and settings reachable.
+        <ErrorBoundary>
           <SongList
             songs={songsWithChangeFlags}
             onNoteChange={(key, value) => localStorage.setItem(key, value)}
@@ -216,7 +230,7 @@ export default function App() {
             }
           />
           <CameraTeam positions={dashboard.positions} />
-        </>
+        </ErrorBoundary>
       )}
 
       {showSettings && cfg && (

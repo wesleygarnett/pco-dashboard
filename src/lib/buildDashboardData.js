@@ -1,7 +1,9 @@
-import { buildMap, resolveTeamName, parseLeaderNames, parseDescriptionBubbles, matchLeaders, getPhoto, sortVideoTeam } from './matching.js';
+import { buildMap, resolveTeamName, parseLeaderNames, parseDescriptionBubbles, matchLeaders, getPhoto } from './matching.js';
 import { capFirst, avatarGradient, fmtDate, getInitials } from './format.js';
 
 const LIVE_WINDOW_MS = 60 * 60 * 1000;
+
+const MAX_POSITION_NAME_LENGTH = 200;
 
 export function buildDashboardData({ items, teamMembers, planTimes, plan }, cfg, planId) {
   const teamMap = buildMap(teamMembers.included || [], 'Team');
@@ -97,8 +99,19 @@ function buildPositions(allMembers, personMap, cfg) {
   const allVideoRaw = allMembers.filter((m) => m._teamName.toLowerCase().includes(cfg.videoTeamName.toLowerCase()));
 
   return cfg.videoPositions.map((pos) => {
-    const re = new RegExp(pos.pattern, 'i');
-    const members = allVideoRaw.filter((m) => re.test(m.attributes.team_position_name || ''));
+    // The server validates patterns on save, but a settings.json written before
+    // that validation existed would otherwise throw here and blank the display.
+    let re;
+    try {
+      re = new RegExp(pos.pattern, 'i');
+    } catch (_) {
+      re = null;
+    }
+    // Bounding the input keeps a pathological pattern cheap rather than letting
+    // it backtrack over an arbitrarily long position name.
+    const members = re
+      ? allVideoRaw.filter((m) => re.test((m.attributes.team_position_name || '').slice(0, MAX_POSITION_NAME_LENGTH)))
+      : [];
     const confirmed = members.filter((m) => m.attributes.status !== 'D');
     const isEmpty = members.length === 0;
     const isDeclined = members.length > 0 && confirmed.length === 0;
@@ -121,4 +134,4 @@ function buildPositions(allMembers, personMap, cfg) {
   });
 }
 
-export { LIVE_WINDOW_MS, sortVideoTeam };
+export { LIVE_WINDOW_MS };
