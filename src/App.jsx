@@ -5,6 +5,7 @@ import SongList from './components/SongList.jsx';
 import CameraTeam from './components/CameraTeam.jsx';
 import LoadingState from './components/LoadingState.jsx';
 import ErrorState from './components/ErrorState.jsx';
+import EmptyState from './components/EmptyState.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import SetupWizard from './components/SetupWizard.jsx';
 import SettingsModal from './components/SettingsModal.jsx';
@@ -12,7 +13,7 @@ import { getSettings, getPlans, getPlan } from './api/client.js';
 import ShotEditor from './components/ShotEditor.jsx';
 import { buildDashboardData, LIVE_WINDOW_MS } from './lib/buildDashboardData.js';
 import { shotList } from './lib/shotNotes.js';
-import { fmtDate, fmtTime, fmtCountdown } from './lib/format.js';
+import { fmtDate, fmtTime, fmtCountdown, isTodayOrLater } from './lib/format.js';
 
 const TEST_MODE = new URLSearchParams(location.search).has('test');
 
@@ -96,12 +97,29 @@ export default function App() {
     const list = data.data || [];
     if (!list.length) {
       setPlans([]);
-      setStatus({ state: 'error', message: 'No upcoming plans found.' });
+      // Not an error: a service type with nothing scheduled is a normal state,
+      // and retrying won't change it. Name the service type so it's obvious
+      // whether the wrong one is selected.
+      setStatus({
+        state: 'empty',
+        message: settings.serviceTypeName
+          ? `No plans are scheduled in “${settings.serviceTypeName}”.`
+          : 'No plans are scheduled in the selected service type.',
+      });
       return;
     }
-    const mapped = list.map((p) => ({ id: p.id, label: fmtDate(p.attributes.sort_date, settings.timezone) }));
+
+    const mapped = list.map((p) => ({
+      id: p.id,
+      label: fmtDate(p.attributes.sort_date, settings.timezone),
+      isUpcoming: isTodayOrLater(p.attributes.sort_date, settings.timezone),
+    }));
     setPlans(mapped);
-    await selectPlan(mapped[0].id, settings);
+
+    // Today's plan first, then the next one up; if everything is in the past,
+    // fall back to the most recent.
+    const current = mapped.find((p) => p.isUpcoming) || mapped[mapped.length - 1];
+    await selectPlan(current.id, settings);
   }
 
   async function selectPlan(planId, settings = cfg) {
@@ -237,6 +255,12 @@ export default function App() {
         <SetupWizard cfg={cfg} onComplete={handleSetupComplete} />
       ) : status.state === 'loading' ? (
         <LoadingState />
+      ) : status.state === 'empty' ? (
+        <EmptyState
+          message={status.message}
+          onOpenSettings={() => setShowSettings(true)}
+          onRetry={boot}
+        />
       ) : status.state === 'error' ? (
         <ErrorState message={status.message} onRetry={boot} />
       ) : (

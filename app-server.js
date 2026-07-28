@@ -439,14 +439,31 @@ function createServer(options = {}) {
     }
   });
 
+  // PCO's `future` filter drops a plan once its date has passed, so a booth
+  // display that only asked for future plans went blank during — or right
+  // after — the very service it exists to show. Recent plans are fetched
+  // alongside so today's is always reachable, and so the picker can look back
+  // at last Sunday.
   app.get('/api/plans', async (req, res) => {
     try {
       const { serviceTypeId } = req.query;
       if (!serviceTypeId) return res.status(400).json({ error: 'serviceTypeId required' });
       const st = encodeURIComponent(serviceTypeId);
-      res.json(await pco(
-        `/services/v2/service_types/${st}/plans?filter=future&order=sort_date&per_page=8`
-      ));
+      const base = `/services/v2/service_types/${st}/plans`;
+
+      const [future, past] = await Promise.all([
+        pco(`${base}?filter=future&order=sort_date&per_page=8`),
+        // Descending, so a small page gets the *most recent* past plans.
+        pco(`${base}?filter=past&order=-sort_date&per_page=4`).catch(() => ({ data: [] })),
+      ]);
+
+      const byId = new Map();
+      [...(past.data || []), ...(future.data || [])].forEach(p => byId.set(p.id, p));
+      const data = [...byId.values()].sort(
+        (a, b) => new Date(a.attributes?.sort_date || 0) - new Date(b.attributes?.sort_date || 0),
+      );
+
+      res.json({ data });
     } catch (error) {
       console.error('[plans]', error.message);
       res.status(500).json({ error: error.message });
