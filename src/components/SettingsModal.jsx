@@ -75,7 +75,7 @@ export default function SettingsModal({ cfg, onClose, onSaved, onSetupRequired }
         />
         <StatusLine status={form.status} />
         <div className="flex justify-end">
-          <Button variant="secondary"onClick={form.testConnection}>Test Connection</Button>
+          <Button variant="secondary" onClick={form.testConnection}>Test Connection</Button>
         </div>
       </SectionCard>
 
@@ -100,10 +100,10 @@ export default function SettingsModal({ cfg, onClose, onSaved, onSetupRequired }
 
       <StatusLine status={saveStatus} />
       <div className="flex items-center justify-between">
-        <Button variant="danger"onClick={handleResetAll}>Reset All Settings</Button>
+        <Button variant="danger" onClick={handleResetAll}>Reset All Settings</Button>
         <div className="flex gap-2">
-          <Button variant="secondary"onClick={onClose}>Close</Button>
-          <Button variant="primary"onClick={handleSave}>Save Settings</Button>
+          <Button variant="secondary" onClick={onClose}>Close</Button>
+          <Button variant="primary" onClick={handleSave}>Save Settings</Button>
         </div>
       </div>
     </Overlay>

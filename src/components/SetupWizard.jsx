@@ -68,7 +68,7 @@ export default function SetupWizard({ cfg, onComplete }) {
             This wizard gets the app from first launch to live dashboard with no file editing.
           </div>
           <WizardButtons>
-            <Button variant="primary"onClick={() => setStep(2)}>Get Started</Button>
+            <Button variant="primary" onClick={() => setStep(2)}>Get Started</Button>
           </WizardButtons>
         </div>
       )}
@@ -79,8 +79,8 @@ export default function SetupWizard({ cfg, onComplete }) {
           <CredentialsFields draft={form.draft} setField={form.setField} envLocked={form.envLocked} />
           <StatusLine status={form.status} />
           <WizardButtons>
-            <Button variant="secondary"onClick={() => setStep(1)}>Back</Button>
-            <Button variant="primary"onClick={handleTestCredentials}>Test Connection</Button>
+            <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
+            <Button variant="primary" onClick={handleTestCredentials}>Test Connection</Button>
           </WizardButtons>
         </div>
       )}
@@ -90,8 +90,8 @@ export default function SetupWizard({ cfg, onComplete }) {
           <div className="text-[18px] font-bold text-[var(--text)]">Choose a Service Type</div>
           <ServiceTypeField draft={form.draft} setField={form.setField} serviceTypes={form.serviceTypes} />
           <WizardButtons>
-            <Button variant="secondary"onClick={() => setStep(2)}>Back</Button>
-            <Button variant="primary"onClick={() => setStep(4)}>Continue</Button>
+            <Button variant="secondary" onClick={() => setStep(2)}>Back</Button>
+            <Button variant="primary" onClick={() => setStep(4)}>Continue</Button>
           </WizardButtons>
         </div>
       )}
@@ -102,8 +102,8 @@ export default function SetupWizard({ cfg, onComplete }) {
           <DisplayFields draft={form.draft} setField={form.setField} includePollInterval={false} />
           <TeamMatchingFields draft={form.draft} setField={form.setField} />
           <WizardButtons>
-            <Button variant="secondary"onClick={() => setStep(3)}>Back</Button>
-            <Button variant="primary"onClick={() => setStep(5)}>Continue</Button>
+            <Button variant="secondary" onClick={() => setStep(3)}>Back</Button>
+            <Button variant="primary" onClick={() => setStep(5)}>Continue</Button>
           </WizardButtons>
         </div>
       )}
@@ -120,8 +120,8 @@ export default function SetupWizard({ cfg, onComplete }) {
           />
           <StatusLine status={saveStatus} />
           <WizardButtons>
-            <Button variant="secondary"onClick={() => setStep(4)}>Back</Button>
-            <Button variant="primary"onClick={handleSave}>Save &amp; Launch</Button>
+            <Button variant="secondary" onClick={() => setStep(4)}>Back</Button>
+            <Button variant="primary" onClick={handleSave}>Save &amp; Launch</Button>
           </WizardButtons>
         </div>
       )}

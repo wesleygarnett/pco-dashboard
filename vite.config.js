@@ -4,7 +4,9 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  publicDir: 'static-assets',
+  // Disabled, not misconfigured: `public/` is this app's build *output*, so
+  // Vite's default publicDir would collide with outDir below.
+  publicDir: false,
   build: {
     outDir: 'public',
     emptyOutDir: true,
