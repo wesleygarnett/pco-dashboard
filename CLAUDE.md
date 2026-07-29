@@ -47,6 +47,18 @@ Two run modes share the same backend:
 
 **Frontend is a Vite + React app.** Source lives in `src/` (components, state, API client, lib helpers — see below). `public/` is a **generated build artifact** (git-ignored) produced by `npm run build` — never hand-edit files in `public/`; edit `src/` and rebuild. Both Electron and the Express static server just serve whatever is currently in `public/`, so a build must run before either will reflect frontend changes.
 
+### Always-on / wall-display mode
+The Electron app is built to run unattended for months on a Mac mini driving a TV. **The governing rule is that no failure path may end in a stopped app or a screen someone has to click.** Anything added here must preserve that.
+- **Escapable, not locked.** The window is `fullscreen: true`, deliberately *not* `kiosk: true` and not `frame: false`, so `Cmd+Q`, `Cmd+Tab`, and `Cmd+Ctrl+F` still work on the mini. Don't "upgrade" this to true kiosk mode.
+- **`electron-main.js` never quits on error.** Startup (`startWithRetry`) retries forever on 1s→30s backoff; the old code called `app.quit()` on any throw, which turned a boot-before-the-network into a black screen. `did-fail-load` and `unresponsive` reload the window on the same backoff (`scheduleReload`); `render-process-gone` destroys and recreates it. `did-finish-load` resets the backoff.
+- A `powerSaveBlocker('prevent-display-sleep')` is held for the process lifetime — the app-level half of keeping the TV awake. The macOS Energy Saver settings on the mini are the other half; neither works alone. Verify with `pmset -g assertions`.
+- `app.requestSingleInstanceLock()` guards against a login item plus a manual open running two apps and two servers.
+- **`src/App.jsx` has three independent refresh paths.** Don't collapse them: the live poll (`cfg.pollIntervalMs`, only while `anyLive`) drives change highlighting during a service; the error-retry effect (`RETRY_MIN_MS`→`RETRY_MAX_MS` backoff) heals a failed boot; and `backgroundRefresh` (`BACKGROUND_REFRESH_MS`, 15 min, always running) rolls the board over to next Sunday's plan — without it a screen left up all week shows a stale plan forever.
+- **`loadPlans(settings, { quiet: true })` is the unattended path.** Quiet mode never shows a spinner or an empty state when something is already on screen, and refreshes the current plan in place instead of routing through `selectPlan`'s loading state. A background failure must always leave the last good board up (`console.warn`, like the live poll) — never swap it for `ErrorState`.
+- `ParticleBackground` is capped at 30fps and pauses on `visibilitychange`, because on an old Intel mini's integrated GPU an uncapped rAF loop runs the fans for years. It also no-ops under `prefers-reduced-motion`.
+- **macOS builds must ship x64.** `build.mac.target` pins `arch: ["x64", "arm64"]`; without it electron-builder follows the host arch and an arm64-only DMG silently won't launch on an Intel mini. Build on the dev Mac and copy the DMG — the lockfile's `lightningcss`/`oxide`/`rolldown` binaries are arm64-only, so `npm install` on an Intel mini won't build.
+- Setup steps for a new mini (auto-login, login item, Energy Saver, power-failure restart) live in `docs/wall-display-setup.md`.
+
 ### Responsive layout
 The **`lg` breakpoint (1024px) is the layout contract** — the app has two distinct layouts, not one fluid one. Read this before changing anything visual.
 - **Below `lg`** (phones, tablets, small windows): the page scrolls, content stacks, and song cards are uniform height. **At/above `lg`**: the fixed no-scroll wall/TV layout — `lg:grid lg:h-full lg:grid-rows-[auto_1fr_auto]` on the `App.jsx` root, with everything sized to fill the viewport exactly.
