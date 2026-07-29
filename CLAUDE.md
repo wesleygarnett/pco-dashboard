@@ -72,7 +72,8 @@ The **`lg` breakpoint (1024px) is the layout contract** — the app has two dist
 ### Frontend structure (`src/`)
 - `src/main.jsx` — mounts `<App/>`
 - `src/App.jsx` — top-level orchestration: settings/plan fetch, countdown/poll timers, routes between setup wizard / loading / error / dashboard
-- `src/components/` — `Header`, `SongList`/`SongCard`, `CameraTeam`/`CameraSlot`, `SetupWizard`, `SettingsModal`, `ShotEditor`, `ParticleBackground`, `LoadingState`/`ErrorState`/`ErrorBoundary`; shared settings form pieces live in `src/components/settings/`
+- `src/components/` — `Header`, `SongList`/`SongCard`, `CameraTeam`/`CameraSlot`, `SetupWizard`, `SettingsModal`, `ShotEditor`, `ParticleBackground`, `LoadingState`/`ErrorState`/`EmptyState`/`ErrorBoundary`; shared settings form pieces live in `src/components/settings/`
+- **View states** are a ternary in `App.jsx` over `status.state` ∈ `loading | error | empty | ready` (plus a separate `setupRequired` flag). `empty` is distinct from `error` on purpose: a service type with nothing scheduled isn't a failure, and "Try Again" can only fail again — it names the service type and offers a route into Settings instead. The ternary emits exactly **one** child into the `1fr` grid row, so a new full-screen mode is cheap but anything sitting *alongside* the song list and dock needs `lg:grid-rows-[…]` changed in lockstep.
 - `src/api/client.js` — thin fetch wrapper around the `/api/*` routes below
 - `src/lib/` — pure helpers: `buildDashboardData.js` (transforms `/api/plan` response into song/position props), `matching.js` (team/leader matching), `shotNotes.js` (the PCO item-note shot format — see Camera shots), `format.js`, `positions.js`
 - `src/hooks/useSettingsDraft.js` — shared form state for both the setup wizard and settings modal (same draft/validation/save logic, different step framing)
@@ -122,6 +123,7 @@ Per-song, per-camera assignments — the one thing the app knows that PCO doesn'
 - Auth: HTTP Basic with `PCO_APP_ID` + `PCO_SECRET`
 - Base URL: `https://api.planningcenteronline.com`
 - `per_page` capped at 100 by PCO — use `pcoAll()` for paginated endpoints (e.g. `team_members`)
+- **`/api/plans` fetches `filter=future` *and* `filter=past` and merges them.** This is load-bearing, not redundant: PCO drops a plan from `future` once its date has passed, so a future-only fetch made the booth display fail *during* — and right after — the very service it exists to show. The client then selects today's plan, else the next upcoming, else the most recent, comparing **calendar days in the configured timezone** (`isTodayOrLater` in `src/lib/format.js`) rather than timestamps, so a service that started this morning still counts as current. The `past` request is failure-tolerant so it can't take the page down.
 - Team name resolution uses `include=person,team` + relationship lookup
 - Photo URLs must be proxied through `/api/photo-proxy` (direct PCO photo URLs don't work from browsers)
 

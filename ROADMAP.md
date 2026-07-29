@@ -53,6 +53,18 @@ That shipped alongside five additions that each read a field already arriving in
 Still open in those items: `needed_positions` for a true unfilled state (1.4), rehearsal times
 and third-plus service times (1.6).
 
+Two bugs found by running the result, both fixed:
+
+- **The display errored out whenever no *future* plan existed.** `filter=future` was the only
+  filter requested, and PCO drops a plan from it once its date has passed — so the booth failed
+  during or right after the service it exists to show. Past plans are now fetched and merged,
+  which also closes most of **1.10** (the picker can look back at last Sunday; `filter=past` is
+  no longer unreachable). A service type with nothing scheduled also stopped being styled as an
+  error.
+- **Clearing the last camera shot returned a PCO 422.** The note holds every position in one
+  body, so clearing the final shot produced a blank body, which PCO rejects. Blank content now
+  deletes the note — while preserving any text in it the app doesn't own.
+
 One Tier 0 item was deliberately left open: **hosted-mode authentication (0.2)**. The Render
 deployment's settings routes remain unauthenticated; only the SSRF half of the photo-proxy
 problem was fixed. The roster-PII and credential-overwrite exposure on a public Render URL
