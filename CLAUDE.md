@@ -72,11 +72,11 @@ The **`lg` breakpoint (1024px) is the layout contract** — the app has two dist
 ### Frontend structure (`src/`)
 - `src/main.jsx` — mounts `<App/>`
 - `src/App.jsx` — top-level orchestration: settings/plan fetch, countdown/poll timers, routes between setup wizard / loading / error / dashboard
-- `src/components/` — `Header`, `SongList`/`SongCard`, `CameraTeam`/`CameraSlot`, `SetupWizard`, `SettingsModal`, `ParticleBackground`, `LoadingState`/`ErrorState`; shared settings form pieces live in `src/components/settings/`
+- `src/components/` — `Header`, `SongList`/`SongCard`, `CameraTeam`/`CameraSlot`, `SetupWizard`, `SettingsModal`, `ShotEditor`, `ParticleBackground`, `LoadingState`/`ErrorState`/`ErrorBoundary`; shared settings form pieces live in `src/components/settings/`
 - `src/api/client.js` — thin fetch wrapper around the `/api/*` routes below
-- `src/lib/` — pure helpers: `buildDashboardData.js` (transforms `/api/plan` response into song/position props), `matching.js` (team/leader matching), `format.js`, `positions.js`
+- `src/lib/` — pure helpers: `buildDashboardData.js` (transforms `/api/plan` response into song/position props), `matching.js` (team/leader matching), `shotNotes.js` (the PCO item-note shot format — see Camera shots), `format.js`, `positions.js`
 - `src/hooks/useSettingsDraft.js` — shared form state for both the setup wizard and settings modal (same draft/validation/save logic, different step framing)
-- `src/ui/theme.css` — the night-mode "Glass Panel" theme: violet primary accent, green secondary (moved here from `src/theme.css` when `src/ui/` was extracted). Contains the design tokens (canonical names are `--accent*`; `--purple*`/`--cyan*`/`--amber*` remain as deprecated aliases) and the shared glass surfaces `.glass-pill`, `.glass-bar`, `.glass-dock`, `.glass-card` (+ `.is-changed`). `.glass-bar` (header) and `.glass-dock` (camera dock) are separate from `.glass-pill` only because they swap `border-radius` at `lg` — rounded card on phones, full pill on the wall display.
+- `src/ui/theme.css` — the night-mode "Glass Panel" theme: violet primary accent, green secondary (moved here from `src/theme.css` when `src/ui/` was extracted). Contains the design tokens (canonical names are `--accent*`; `--purple*`/`--cyan*`/`--amber*` remain as deprecated aliases pointing at the violet accent — **`--warn*` is the real amber**, a genuinely third state between informational `--accent` and wrong-is-wrong `--danger`, used for unconfirmed volunteers and unmatched positions) and the shared glass surfaces `.glass-pill`, `.glass-bar`, `.glass-dock`, `.glass-card` (+ `.is-changed`). `.glass-bar` (header) and `.glass-dock` (camera dock) are separate from `.glass-pill` only because they swap `border-radius` at `lg` — rounded card on phones, full pill on the wall display.
 - `src/index.css` — Tailwind entry (v4, CSS-first config; layers utilities over the theme tokens) plus the **app-level** layout CSS that isn't part of the library: `.app-shell` safe-area padding and the `.song-card-*` grid (see Responsive layout above)
 
 ## Key files
@@ -99,12 +99,21 @@ The **`lg` breakpoint (1024px) is the layout contract** — the app has two dist
 - `POST /api/settings/test-credentials` — validates PCO creds, returns service types
 - `POST /api/settings/reset` — clears saved settings
 
+## Camera shots
+Per-song, per-camera assignments — the one thing the app knows that PCO doesn't model directly.
+- **Stored as a PCO item note**, one per song item, in the category named by `shotNoteCategoryId`. The body is one `Label: shot` line per position (`Camera 1: wide, locked`). That format is load-bearing: the note is a shared document, so it must stay readable and hand-editable inside PCO. `src/lib/shotNotes.js` is the only place that format is parsed or written — it's pure, and unrecognized lines are preserved rather than dropped so a PCO-side edit can't lose text.
+- **Item note categories cannot be created through the API** (`ItemNoteCategory` is read-only), so the user creates one in Planning Center and picks it in Settings. `shotNoteCategoryId: ''` turns the feature off entirely.
+- `item_note_category_id` **can only be set on create** — an existing note is PATCHed in place and never recategorized. That's why `shotNoteId` is threaded through from `buildDashboardData` to the editor.
+- Notes ride along on the existing `include=song,arrangement,item_notes`, so reading them costs **no extra request**. Writes go through `PUT /api/item-note`; a read-only PCO token surfaces as a 403 with a permissions message rather than a generic failure.
+- `GET /api/item-note-categories?serviceTypeId=` backs the settings dropdown.
+
 ### Settings behavior
 - Secret is never echoed back; API only returns `hasSecret: true/false`
 - Blank secret in settings modal = keep existing secret
-- `videoTeamName`, `bandTeamNames`, `directorKeywords` are normalized to lowercase on save — if team-matching breaks, check that saved values match actual PCO team/position names
+- `videoTeamName` and `bandTeamNames` are normalized to lowercase on save — if team-matching breaks, check that saved values match actual PCO team/position names
 - `videoPositions` patterns are validated as regex server-side before save
 - `pollIntervalMs` is whitelisted to specific values: `0` (off), `30000`, `60000`, `120000`, `300000`
+- `shotVocabulary` is the one string array that is **not** lowercased on save (`sanitizeLabelArray`) — it's shown to the user verbatim as one-click chips, and the terms are deliberately whatever a given church's directors actually say
 - `orgLogo` is an optional custom header logo stored inline as a data URL (the client downscales the dropped `.png`/`.jpg` to 128px before saving). Server-side `sanitizeLogo()` accepts only `data:image/(png|jpeg)` ≤500 KB and rejects anything else to empty. When set, it replaces the `orgIcon` emoji in the header.
 - Desktop settings stored in a per-user file outside the repo (`settings.json` at the app's user data path)
 - Hosted/Render settings are file-backed and **do not persist across redeploys** — consider env-based config for `serviceTypeId` if that matters

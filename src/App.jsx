@@ -5,13 +5,28 @@ import SongList from './components/SongList.jsx';
 import CameraTeam from './components/CameraTeam.jsx';
 import LoadingState from './components/LoadingState.jsx';
 import ErrorState from './components/ErrorState.jsx';
+import EmptyState from './components/EmptyState.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import SetupWizard from './components/SetupWizard.jsx';
 import SettingsModal from './components/SettingsModal.jsx';
 import { getSettings, getPlans, getPlan } from './api/client.js';
+import ShotEditor from './components/ShotEditor.jsx';
 import { buildDashboardData, LIVE_WINDOW_MS } from './lib/buildDashboardData.js';
-import { fmtDate, fmtTime, fmtCountdown } from './lib/format.js';
+import { shotList } from './lib/shotNotes.js';
+import { fmtDate, fmtTime, fmtCountdown, isTodayOrLater } from './lib/format.js';
 
 const TEST_MODE = new URLSearchParams(location.search).has('test');
+
+// A service counts as live from its start until its real end time when PCO
+// supplies one, falling back to the flat one-hour window otherwise.
+function isLiveAt(serviceTime, at) {
+  const diff = serviceTime.startsAt - at;
+  if (diff > 0) return false;
+  const window = serviceTime.endsAt
+    ? Math.max(serviceTime.endsAt - serviceTime.startsAt, 0)
+    : LIVE_WINDOW_MS;
+  return diff > -window;
+}
 
 export default function App() {
   const [cfg, setCfg] = useState(null);
@@ -23,6 +38,7 @@ export default function App() {
   const [now, setNow] = useState(Date.now());
   const [changedSongIds, setChangedSongIds] = useState(new Set());
   const [showSettings, setShowSettings] = useState(false);
+  const [editingShotsFor, setEditingShotsFor] = useState(null);
 
   const songTitlesRef = useRef({});
   const cfgRef = useRef(null);
@@ -38,10 +54,7 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  const anyLive = (dashboard?.serviceTimes || []).some((t) => {
-    const diff = t - now;
-    return diff <= 0 && diff > -LIVE_WINDOW_MS;
-  });
+  const anyLive = (dashboard?.serviceTimes || []).some((t) => isLiveAt(t, now));
 
   // Background polling — only while a service is live (or ?test is set)
   useEffect(() => {
@@ -84,12 +97,29 @@ export default function App() {
     const list = data.data || [];
     if (!list.length) {
       setPlans([]);
-      setStatus({ state: 'error', message: 'No upcoming plans found.' });
+      // Not an error: a service type with nothing scheduled is a normal state,
+      // and retrying won't change it. Name the service type so it's obvious
+      // whether the wrong one is selected.
+      setStatus({
+        state: 'empty',
+        message: settings.serviceTypeName
+          ? `No plans are scheduled in “${settings.serviceTypeName}”.`
+          : 'No plans are scheduled in the selected service type.',
+      });
       return;
     }
-    const mapped = list.map((p) => ({ id: p.id, label: fmtDate(p.attributes.sort_date, settings.timezone) }));
+
+    const mapped = list.map((p) => ({
+      id: p.id,
+      label: fmtDate(p.attributes.sort_date, settings.timezone),
+      isUpcoming: isTodayOrLater(p.attributes.sort_date, settings.timezone),
+    }));
     setPlans(mapped);
-    await selectPlan(mapped[0].id, settings);
+
+    // Today's plan first, then the next one up; if everything is in the past,
+    // fall back to the most recent.
+    const current = mapped.find((p) => p.isUpcoming) || mapped[mapped.length - 1];
+    await selectPlan(current.id, settings);
   }
 
   async function selectPlan(planId, settings = cfg) {
@@ -100,9 +130,13 @@ export default function App() {
     setStatus({ state: 'loading', message: 'Loading service…' });
     try {
       const d = await getPlan(settings.serviceTypeId, planId);
+      // Switching plans quickly can land an older response after a newer one —
+      // the poller already guards for this, and so must the primary path.
+      if (planIdRef.current !== planId) return;
       applyDashboardData(d, settings, planId, { isPoll: false });
       setStatus({ state: 'ready' });
     } catch (e) {
+      if (planIdRef.current !== planId) return;
       console.error(e);
       setStatus({ state: 'error', message: e.message });
     }
@@ -112,10 +146,7 @@ export default function App() {
     const data = buildDashboardData(rawPlanData, settings, planId);
 
     if (isPoll) {
-      const isLiveNow = data.serviceTimes.some((t) => {
-        const diff = t - Date.now();
-        return diff <= 0 && diff > -LIVE_WINDOW_MS;
-      });
+      const isLiveNow = data.serviceTimes.some((t) => isLiveAt(t, Date.now()));
       if (isLiveNow || TEST_MODE) {
         const newlyChanged = [];
         data.songs.forEach((song) => {
@@ -133,14 +164,14 @@ export default function App() {
   }
 
   const headerServiceTimes = (dashboard?.serviceTimes || []).map((t) => {
-    const diff = t - now;
-    const isLive = diff <= 0 && diff > -LIVE_WINDOW_MS;
-    const isPast = diff <= -LIVE_WINDOW_MS;
+    const diff = t.startsAt - now;
+    const isLive = isLiveAt(t, now);
     return {
-      time: fmtTime(new Date(t), cfg?.timezone),
+      time: fmtTime(new Date(t.startsAt), cfg?.timezone),
+      name: t.name,
       countdown: !isLive && diff > 0 ? fmtCountdown(diff) : null,
       isLive,
-      isPast,
+      isPast: diff <= 0 && !isLive,
     };
   });
 
@@ -148,6 +179,23 @@ export default function App() {
     ...s,
     isChanged: changedSongIds.has(s.id),
   }));
+
+  // Write the saved shots straight back into the dashboard rather than
+  // refetching the whole plan — the note we just PUT is the authority.
+  function handleShotsSaved(songId, assignments, noteId) {
+    setEditingShotsFor(null);
+    setDashboard((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        songs: prev.songs.map((s) =>
+          s.id === songId
+            ? { ...s, shotAssignments: assignments, shotNoteId: noteId, shots: shotList(assignments, cfg.videoPositions) }
+            : s,
+        ),
+      };
+    });
+  }
 
   async function applyNewSettings(settings) {
     setCfg(settings);
@@ -159,7 +207,14 @@ export default function App() {
     setDashboard(null);
     setChangedSongIds(new Set());
     songTitlesRef.current = {};
-    await loadPlans(settings);
+    try {
+      await loadPlans(settings);
+    } catch (e) {
+      // Without this the rejection escapes and the app sits on the spinner
+      // forever, with no error state and no way back.
+      console.error(e);
+      setStatus({ state: 'error', message: e.message });
+    }
   }
 
   function handleSetupComplete(settings) {
@@ -200,10 +255,18 @@ export default function App() {
         <SetupWizard cfg={cfg} onComplete={handleSetupComplete} />
       ) : status.state === 'loading' ? (
         <LoadingState />
+      ) : status.state === 'empty' ? (
+        <EmptyState
+          message={status.message}
+          onOpenSettings={() => setShowSettings(true)}
+          onRetry={boot}
+        />
       ) : status.state === 'error' ? (
         <ErrorState message={status.message} onRetry={boot} />
       ) : (
-        <>
+        // Scoped inside the header so a render fault in the song list or camera
+        // dock still leaves refresh and settings reachable.
+        <ErrorBoundary>
           <SongList
             songs={songsWithChangeFlags}
             onNoteChange={(key, value) => localStorage.setItem(key, value)}
@@ -214,9 +277,21 @@ export default function App() {
                 return next;
               })
             }
+            canEditShots={!!cfg?.shotNoteCategoryId}
+            onEditShots={setEditingShotsFor}
           />
-          <CameraTeam positions={dashboard.positions} />
-        </>
+          <CameraTeam positions={dashboard.positions} unmatched={dashboard.unmatched} />
+        </ErrorBoundary>
+      )}
+
+      {editingShotsFor && cfg && currentPlanId && (
+        <ShotEditor
+          song={editingShotsFor}
+          cfg={cfg}
+          planId={currentPlanId}
+          onClose={() => setEditingShotsFor(null)}
+          onSaved={handleShotsSaved}
+        />
       )}
 
       {showSettings && cfg && (

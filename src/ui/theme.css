@@ -48,6 +48,17 @@
   --danger-text: rgba(224, 96, 96, 0.85);
   --danger-bg: rgba(224, 96, 96, 0.1);
   --danger-border: rgba(224, 96, 96, 0.35);
+  /* ---- warning (amber) ----
+     A genuinely third state, distinct from --accent (informational) and
+     --danger (something is wrong). Used for "scheduled but unconfirmed" and
+     for people who match no configured position. Note the deprecated --amber*
+     aliases above point at the violet accent and are NOT this. */
+  --warn: #f0c274;
+  --warn-bright: #f7d9a4;
+  --warn-bg: rgba(240, 194, 116, 0.12);
+  --warn-border: rgba(240, 194, 116, 0.4);
+  --avatar-ring-warn: rgba(240, 194, 116, 0.55);
+
   --note-text: #8be8ae;
   --note-accent: rgba(110, 231, 160, 0.55);
   --note-bg: rgba(110, 231, 160, 0.06);

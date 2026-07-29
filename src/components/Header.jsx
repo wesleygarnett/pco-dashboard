@@ -75,7 +75,7 @@ export default function Header({
             >
               {plans.map((p) => (
                 <option key={p.id} value={p.id} style={{ background: 'var(--plan-option-bg)', color: 'var(--text)' }}>
-                  {p.label}
+                  {p.isUpcoming === false ? `${p.label} (past)` : p.label}
                 </option>
               ))}
             </select>
@@ -114,7 +114,7 @@ export default function Header({
                     : 'bg-white/[0.04] text-[var(--text)]'
               }`}
             >
-              {svc.time}
+              {svc.name || svc.time}
               {svc.isLive ? (
                 <>
                   <span className="mx-1.5 opacity-50">·</span>

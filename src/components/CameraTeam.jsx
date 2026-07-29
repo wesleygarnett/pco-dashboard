@@ -1,8 +1,8 @@
 import CameraSlot from './CameraSlot.jsx';
 
-export default function CameraTeam({ positions }) {
+export default function CameraTeam({ positions, unmatched = [] }) {
   return (
-    <div className="flex shrink-0 justify-center overflow-x-auto">
+    <div className="flex shrink-0 flex-col items-center gap-2 overflow-x-auto">
       {/* Slots are fixed-width below lg (see CameraSlot), so wrapped rows form
           aligned columns and each row stays centered — the previous ragged
           layout came from slots sizing to their label text. At lg it returns to
@@ -18,6 +18,20 @@ export default function CameraTeam({ positions }) {
           </div>
         ))}
       </div>
+
+      {/* Scheduled people whose position matches no configured pattern used to
+          vanish without a trace. This is the "why isn't Dave on the dock?"
+          answer, on the dock. */}
+      {unmatched.length > 0 && (
+        <div
+          className="max-w-full truncate rounded-full border border-[var(--warn-border)] bg-[var(--warn-bg)] px-3 py-1 text-[12px] font-semibold text-[var(--warn)]"
+          title={unmatched.map((m) => `${m.name}${m.positionName ? ` — ${m.positionName}` : ''}`).join('\n')}
+        >
+          {unmatched.length} scheduled {unmatched.length === 1 ? 'person isn’t' : 'people aren’t'} shown — no position
+          matches {unmatched.map((m) => m.positionName || m.name).slice(0, 3).join(', ')}
+          {unmatched.length > 3 ? '…' : ''}
+        </div>
+      )}
     </div>
   );
 }

@@ -55,6 +55,45 @@ export function fmtDate(d, timezone) {
   });
 }
 
+// Calendar day in the configured timezone, as YYYY-MM-DD so plain string
+// comparison orders correctly. 'en-CA' is the locale that formats that way.
+function isoDay(d, timezone) {
+  return new Date(d).toLocaleDateString('en-CA', { timeZone: timezone || 'America/New_York' });
+}
+
+/**
+ * True when a plan's date is today or later. Compares calendar days rather
+ * than timestamps, so a service that started this morning still counts as
+ * current — which is exactly when a booth display is being watched.
+ */
+export function isTodayOrLater(sortDate, timezone) {
+  if (!sortDate) return false;
+  const then = new Date(sortDate);
+  if (Number.isNaN(then.getTime())) return false;
+  return isoDay(then, timezone) >= isoDay(new Date(), timezone);
+}
+
+// "Last done" freshness for a song. Weeks are the unit worship teams actually
+// argue in, so favour those over exact dates for the first few months.
+export function fmtRelativeDate(d, timezone) {
+  if (!d) return '';
+  const then = new Date(d).getTime();
+  if (Number.isNaN(then)) return '';
+
+  const days = Math.floor((Date.now() - then) / DAY_MS);
+  if (days < 0) return '';
+  if (days === 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 14) return `${days} days ago`;
+  if (days < 70) return `${Math.round(days / 7)} weeks ago`;
+
+  return new Date(then).toLocaleDateString('en-US', {
+    month: 'short',
+    year: 'numeric',
+    timeZone: timezone || 'America/New_York',
+  });
+}
+
 export function fmtTime(d, timezone) {
   if (!d) return '';
   return new Date(d).toLocaleTimeString('en-US', {

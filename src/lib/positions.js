@@ -29,7 +29,10 @@ export function patternFromLabel(label) {
       if (/^\d+$/.test(word)) return '0?' + word + '\\b';
       const expanded = LABEL_ABBREVS[word];
       if (expanded) return expanded;
-      return word.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+      // `*` belongs in this class too — without it a label like "Camera *"
+      // generates `camera\s**`, which throws "Nothing to repeat" on save and
+      // reports an invalid-regex error for something the user typed as a name.
+      return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     })
     .join('\\s*');
 }

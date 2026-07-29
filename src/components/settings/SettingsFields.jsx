@@ -191,6 +191,52 @@ export function DisplayFields({ draft, setField, includePollInterval }) {
   );
 }
 
+export function ShotNotesFields({ draft, setField, noteCategories }) {
+  const rows = noteCategories || [];
+  return (
+    <div className="flex flex-col gap-4">
+      <Field
+        label="Shot Note Category"
+        hint="Camera assignments are saved into this Planning Center item-note category, so the whole team sees them. Categories can only be created in Planning Center itself — Services → Service Type → Item Note Categories."
+        fullSpan
+      >
+        <select
+          className={inputClass}
+          value={draft.shotNoteCategoryId}
+          onChange={(e) => setField('shotNoteCategoryId', e.target.value)}
+        >
+          <option value="">Off — don’t show camera shots</option>
+          {rows.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.attributes?.name || c.id}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      {noteCategories !== null && rows.length === 0 && (
+        <div className="rounded-lg border border-[var(--warn-border)] bg-[var(--warn-bg)] px-3 py-2 text-[13px] text-[var(--warn-bright)]">
+          This service type has no item note categories yet. Create one in Planning Center (for example “Camera
+          Shots”), then reopen this panel.
+        </div>
+      )}
+
+      <Field
+        label="Shot Vocabulary"
+        hint="One-click terms offered when editing shots. Use whatever words your directors actually say — comma separated."
+        fullSpan
+      >
+        <input
+          type="text"
+          className={inputClass}
+          value={draft.shotVocabularyText}
+          onChange={(e) => setField('shotVocabularyText', e.target.value)}
+        />
+      </Field>
+    </div>
+  );
+}
+
 export function TeamMatchingFields({ draft, setField }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -208,14 +254,6 @@ export function TeamMatchingFields({ draft, setField }) {
           className={inputClass}
           value={draft.bandTeamNamesText}
           onChange={(e) => setField('bandTeamNamesText', e.target.value)}
-        />
-      </Field>
-      <Field label="Highlighted Member Keywords" fullSpan>
-        <input
-          type="text"
-          className={inputClass}
-          value={draft.directorKeywordsText}
-          onChange={(e) => setField('directorKeywordsText', e.target.value)}
         />
       </Field>
     </div>
