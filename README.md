@@ -8,15 +8,26 @@ https://github.com/fliboys/pco-dashboard/releases/tag/v1.0.0
 
 ## What it does
 
-- **Song cards** — displays each song in the plan with leader photos, key, and description notes
-- **Video production team** — configurable camera/director slots filled automatically from PCO assignments
-- **Live countdown** — counts down to each service time and switches to a pulsing LIVE indicator once the service starts
+- **Song cards** — each song in the plan with leader photos, key, arrangement BPM and section
+  structure, and how long it's been since you last did it
+- **Camera shot assignments** — per song, per camera ("Camera 2: waist, push in on the bridge"),
+  stored as a Planning Center item note so the whole team sees the same plan rather than one
+  device. See [Camera shots](#camera-shots).
+- **Video production team** — configurable camera/director slots filled automatically from PCO
+  assignments, showing confirmed, unconfirmed, *notified but never opened*, and declined (with
+  reason), plus a warning when someone is scheduled but matches no configured position
+- **Live countdown** — counts down to each service time and switches to a pulsing LIVE indicator
+  once the service starts, using the plan's real end time
 - **Song change alerts** — highlights updated songs during a live service
 - **Auto-refresh** — configurable polling interval while a service is live
-- **Director's notes** — per-song notes saved in browser `localStorage`
+- **Director's notes** — per-song scratch notes saved in browser `localStorage` (device-local;
+  camera shots above are the shared, PCO-backed kind)
 - **Test mode** — append `?test` to the URL to enable change detection outside service hours
-- **First-run setup wizard** — configure credentials, service type, org labels, team names, and video positions in-app
+- **First-run setup wizard** — configure credentials, service type, org labels, team names, and
+  video positions in-app
 - **Settings panel** — update dashboard config later without editing source files
+
+Planned work — features, fixes, and known gaps — is tracked in [`ROADMAP.md`](ROADMAP.md).
 
 ---
 
@@ -91,9 +102,40 @@ For frontend-only hot-reload development, run `npm run dev` (Vite, port 5173) al
 
 ---
 
+## Camera shots
+
+Per-song, per-camera assignments — the one thing this app knows that Planning Center doesn't
+model directly.
+
+They're stored **as a PCO item note**, one per song, so the shot plan lives in Planning Center
+rather than on one booth machine: the worship leader and the ProPresenter operator see the same
+text, and it survives redeploys. The note body is one line per position, which is deliberately
+readable and hand-editable inside PCO:
+
+```text
+Camera 1: wide, locked
+Camera 2: Bekah — waist, push in on the bridge
+```
+
+**One-time setup.** Item note categories can't be created through the PCO API, so:
+
+1. In Planning Center: **Services → your Service Type → Item Note Categories**, add one (for
+   example "Camera Shots").
+2. In the dashboard: **Settings → Camera Shots**, pick that category.
+
+Leave the category set to *Off* and the feature stays hidden entirely. The shot vocabulary — the
+one-click chips offered when editing — is configurable in the same panel, because the words a
+director actually says ("push in", "tight", "roaming") differ from church to church.
+
+Editing shots requires a PCO token whose account can edit plans; a read-only token gets a clear
+permissions message rather than a generic failure. Clearing every shot on a song deletes the
+note, so no empty notes pile up in Planning Center.
+
+---
+
 ## Component library (`src/ui/`)
 
-The dashboard's presentational pieces (`Avatar`, `Button`, `Badge`, `Field`, `StatusLine`, `Overlay`, plus the terracotta design tokens) live in `src/ui/` as a standalone TypeScript library, separate from the data-coupled app components in `src/components/`. The app imports them directly from source; there's also a standalone build for using them outside this app:
+The dashboard's presentational pieces (`Avatar`, `Button`, `Badge`, `Field`, `StatusLine`, `Overlay`, plus the night-mode design tokens) live in `src/ui/` as a standalone TypeScript library, separate from the data-coupled app components in `src/components/`. The app imports them directly from source; there's also a standalone build for using them outside this app:
 
 ```bash
 npm run build:lib
