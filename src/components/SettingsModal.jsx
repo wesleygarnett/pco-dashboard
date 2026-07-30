@@ -68,7 +68,12 @@ export default function SettingsModal({ cfg, onClose, onSaved, onSetupRequired }
     <Overlay onClose={onClose}>
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-[22px] font-bold text-[var(--text)]">Dashboard Settings</div>
+          <div className="flex items-baseline gap-2">
+            <div className="text-[22px] font-bold text-[var(--text)]">Dashboard Settings</div>
+            {cfg?.appVersion && (
+              <span className="text-[12px] font-medium tabular-nums text-[var(--muted)]">v{cfg.appVersion}</span>
+            )}
+          </div>
           <div className="mt-1 text-[14px] text-[var(--muted)]">
             Adjust credentials, organization labels, polling, team matching, and video slot patterns without leaving
             the app.

@@ -14,10 +14,13 @@ work, so you can get to the desktop without a keyboard trick. It is not locked k
 npm install && npm run dist:mac
 ```
 
-This produces two DMGs in `dist/`. Note the naming — the Intel one has **no** arch suffix:
+This produces two DMGs in `dist/`, each naming its platform and version:
 
-- `PCO Service Dashboard-<version>.dmg` → **x64 (Intel)** — this is the one for the mini
-- `PCO Service Dashboard-<version>-arm64.dmg` → Apple Silicon
+- `PCO Service Dashboard-<version>-mac-x64.dmg` → **Intel** — this is the one for the mini
+- `PCO Service Dashboard-<version>-mac-arm64.dmg` → Apple Silicon
+
+You can confirm which build a mini is running from **Settings** — the version is shown next
+to the "Dashboard Settings" heading.
 
 Don't build on the mini: the lockfile resolved arm64-only build binaries
 (`lightningcss-darwin-arm64`, `@tailwindcss/oxide-darwin-arm64`, `@rolldown/binding-darwin-arm64`),
