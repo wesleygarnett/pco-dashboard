@@ -7,14 +7,23 @@ const COLORS = [
   [129, 140, 248], // indigo
 ];
 
+// This canvas runs for as long as the app is open — which on a wall display is
+// months. Capping the frame rate and pausing when nothing can see it keeps an
+// old Intel mini's integrated GPU from spinning its fans forever.
+const TARGET_FPS = 30;
+const FRAME_MS = 1000 / TARGET_FPS;
+
 export default function ParticleBackground() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     let W, H, particles;
     let rafId;
+    let lastFrame = 0;
 
     function resize() {
       W = canvas.width = window.innerWidth;
@@ -34,7 +43,11 @@ export default function ParticleBackground() {
       };
     }
 
-    function draw() {
+    function draw(ts) {
+      rafId = requestAnimationFrame(draw);
+      if (ts - lastFrame < FRAME_MS) return;
+      lastFrame = ts;
+
       ctx.clearRect(0, 0, W, H);
       for (const p of particles) {
         const [r, g, b] = p.color;
@@ -51,17 +64,35 @@ export default function ParticleBackground() {
         if (p.x < -2) p.x = W + 2;
         if (p.x > W + 2) p.x = -2;
       }
+    }
+
+    function start() {
+      if (rafId) return;
+      lastFrame = 0;
       rafId = requestAnimationFrame(draw);
     }
 
+    function stop() {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+
+    // Nothing to animate for while the display is asleep or the app is hidden.
+    function onVisibility() {
+      if (document.hidden) stop();
+      else start();
+    }
+
     window.addEventListener('resize', resize);
+    document.addEventListener('visibilitychange', onVisibility);
     resize();
     particles = Array.from({ length: 90 }, mkParticle);
-    draw();
+    start();
 
     return () => {
       window.removeEventListener('resize', resize);
-      cancelAnimationFrame(rafId);
+      document.removeEventListener('visibilitychange', onVisibility);
+      stop();
     };
   }, []);
 

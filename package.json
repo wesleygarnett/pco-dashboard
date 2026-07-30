@@ -46,6 +46,7 @@
     "appId": "com.wesleypco.dashboard",
     "productName": "PCO Service Dashboard",
     "asar": true,
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "files": [
       "app-server.js",
       "electron-main.js",
@@ -58,7 +59,13 @@
     },
     "mac": {
       "target": [
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
       "category": "public.app-category.productivity"
     },

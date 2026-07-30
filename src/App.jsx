@@ -17,6 +17,13 @@ import { fmtDate, fmtTime, fmtCountdown, isTodayOrLater } from './lib/format.js'
 
 const TEST_MODE = new URLSearchParams(location.search).has('test');
 
+// The app runs unattended on a wall display, so it has to recover on its own.
+// Failed boots retry on a backoff, and the plan list is re-checked slowly even
+// when nothing is live so the board rolls over to the next service by itself.
+const RETRY_MIN_MS = 15000;
+const RETRY_MAX_MS = 120000;
+const BACKGROUND_REFRESH_MS = 15 * 60 * 1000;
+
 // A service counts as live from its start until its real end time when PCO
 // supplies one, falling back to the flat one-hour window otherwise.
 function isLiveAt(serviceTime, at) {
@@ -43,6 +50,11 @@ export default function App() {
   const songTitlesRef = useRef({});
   const cfgRef = useRef(null);
   const planIdRef = useRef(null);
+  const retryCountRef = useRef(0);
+  const statusRef = useRef(status.state);
+  statusRef.current = status.state;
+  const dashboardRef = useRef(null);
+  dashboardRef.current = dashboard;
 
   useEffect(() => {
     boot();
@@ -74,6 +86,56 @@ export default function App() {
     return () => clearInterval(id);
   }, [anyLive, cfg?.pollIntervalMs]);
 
+  // Unattended recovery: retry a failed boot on a backoff so the display heals
+  // itself if the mini came up before the network did. ErrorState's manual
+  // "Try Again" still works — it just isn't the only way out any more.
+  useEffect(() => {
+    if (status.state !== 'error') {
+      retryCountRef.current = 0;
+      return;
+    }
+    const delay = Math.min(RETRY_MIN_MS * 2 ** retryCountRef.current, RETRY_MAX_MS);
+    const id = setTimeout(() => {
+      retryCountRef.current += 1;
+      boot();
+    }, delay);
+    return () => clearTimeout(id);
+  }, [status]);
+
+  // Slow background refresh, running regardless of whether a service is live.
+  // Without this a screen left up all week keeps showing last Sunday's plan.
+  useEffect(() => {
+    const id = setInterval(backgroundRefresh, BACKGROUND_REFRESH_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  // Coming back from a router reboot shouldn't wait out the backoff.
+  useEffect(() => {
+    function onOnline() {
+      if (statusRef.current === 'error') boot();
+      else backgroundRefresh();
+    }
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, []);
+
+  // Refresh in the background without disturbing what's on screen: a failure
+  // here must never replace a good board with an error state.
+  async function backgroundRefresh() {
+    const settings = cfgRef.current;
+    if (!settings || settings.setupRequired) return;
+    // Only refresh from a settled screen. While loading, this would race the
+    // boot; while in error, a successful quiet refresh would swap in fresh data
+    // behind ErrorState without clearing it — recovery belongs to the retry
+    // effect above, which owns the status transition back to 'ready'.
+    if (statusRef.current !== 'ready' && statusRef.current !== 'empty') return;
+    try {
+      await loadPlans(settings, { quiet: true });
+    } catch (e) {
+      console.warn('[refresh]', e.message);
+    }
+  }
+
   async function boot() {
     try {
       setStatus({ state: 'loading', message: 'Connecting to Planning Center…' });
@@ -92,10 +154,14 @@ export default function App() {
     }
   }
 
-  async function loadPlans(settings) {
+  // `quiet` is the unattended-refresh mode: keep whatever is already on screen
+  // unless there is something genuinely new to show, so the wall display never
+  // flashes a spinner or an empty state at a room full of people.
+  async function loadPlans(settings, { quiet = false } = {}) {
     const data = await getPlans(settings.serviceTypeId);
     const list = data.data || [];
     if (!list.length) {
+      if (quiet && dashboardRef.current) return;
       setPlans([]);
       // Not an error: a service type with nothing scheduled is a normal state,
       // and retrying won't change it. Name the service type so it's obvious
@@ -119,6 +185,16 @@ export default function App() {
     // Today's plan first, then the next one up; if everything is in the past,
     // fall back to the most recent.
     const current = mapped.find((p) => p.isUpcoming) || mapped[mapped.length - 1];
+
+    // Still the same plan on a quiet refresh: update its contents in place
+    // rather than going through selectPlan's loading state.
+    if (quiet && current.id === planIdRef.current) {
+      const d = await getPlan(settings.serviceTypeId, current.id);
+      if (planIdRef.current !== current.id) return;
+      applyDashboardData(d, settings, current.id, { isPoll: true });
+      return;
+    }
+
     await selectPlan(current.id, settings);
   }
 

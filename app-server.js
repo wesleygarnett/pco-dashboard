@@ -8,6 +8,11 @@ try { require('dotenv').config(); } catch (_) { /* dotenv optional */ }
 
 const PCO_BASE = 'https://api.planningcenteronline.com';
 
+// Surfaced in Settings so someone standing at the wall display can tell which
+// build is running. package.json ships inside the asar, so this resolves in a
+// packaged app too.
+const APP_VERSION = require('./package.json').version;
+
 // Hosts the photo proxy will fetch from. Matched against the *parsed hostname*
 // (exact or subdomain), never as a substring of the whole URL — a substring
 // test lets `http://evil.com/?planningcenteronline.com` through.
@@ -272,6 +277,7 @@ function createServer(options = {}) {
       hasSecret: hasCredentials,
       envLocked: runtime.envLocked,
       setupRequired: !hasCredentials || !settings.serviceTypeId,
+      appVersion: APP_VERSION,
     };
   }
 
@@ -412,6 +418,7 @@ function createServer(options = {}) {
           hasSecret: !!(runtime.creds.appId && runtime.creds.secret),
           envLocked: runtime.envLocked,
           setupRequired: !(runtime.creds.appId && runtime.creds.secret) || !saved.serviceTypeId,
+          appVersion: APP_VERSION,
         },
       });
     } catch (error) {
